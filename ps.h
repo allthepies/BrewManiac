@@ -25,8 +25,8 @@
 #define PS_SampleTime      4  //     SampleTime
 #define PS_WindowSize      5  //     WindowSize
 #define PS_BoilHeat      6    //   Boil Heat %
-#define PS_Offset     7      // Offset
-#define PS_Hysteresi     8   //    Hysteresi 
+//#define PS_Offset     7      // Offset
+//#define PS_Hysteresi     8   //    Hysteresi 
 //      9       [ SPACE ]
 
 //  UNIT MENU  
@@ -49,49 +49,46 @@
 #define PS_PidPipe     22     //  PID Pipe
 #define PS_SkipAddMalt     23  //     Skip Add Malt
 #define PS_SkipRemoveMalt     24  //     Skip Remove Malt
-#define PS_SkipIodineTest     25    //   Skip Iodine Test
-#define PS_IodineTime     26   //    Iodine Time
-#define PS_Whirlpool     27     //  Whirlpool
+//#define PS_SkipIodineTest     25    //   Skip Iodine Test
+//#define PS_IodineTime     26   //    Iodine Time
+//#define PS_Whirlpool     27     //  Whirlpool
 //     28 -  31 [ SPACE ]
 
-//  RUN  (HTemp °C - LTemp °C - HTemp °F - LTemp °F - Time)
+//  RUN  (HTemp °C - LTemp °C - Time)
 #define PS_RunBase 32
-#define PS_StageTemperatureAddr(i) ((PS_RunBase)+(i)* 5)
-#define PS_StageTimeAddr(i) ((PS_RunBase)+(i)*5+4)
+//#define PS_StageTemperatureAddr(i) ((PS_RunBase)+(i)* 5)
+//#define PS_StageTimeAddr(i) ((PS_RunBase)+(i)*5+4)
+#define PS_StageTemperatureAddr(i) ((PS_RunBase)+(i)* 3)
+#define PS_StageTimeAddr(i) ((PS_RunBase)+(i)*3+2)
 #define ToTempInStorage(t) ((int)(t*16))
 #define TempFromStorage(t)  ((float)t/16.0)
 
-// 0:   32 -  36 MashIn
-// 1:   37 -  41 Fitasi / phytase
-// 2:   42 -  46 Glucanasi /glucanase
-// 3:   47 -  51 Proteasi /protease
-// 4:   52 -  55 B-Amilasi /B-amylase
-// 5:   57 -  61 A-Amilasi 1 
-// 6:   62 -  66 A-Amilasi 2
-// 7:   67 -  71 Mash Out
+// 0:   32 -  34 MashIn
+// 1:   35 -  37 Main Mash
+// 2:   38 -  40 Mash Out
 
-#define PS_NumberOfHops    72  //      Numbers of Hops
-#define PS_BoilTime     73    //   Boil Time 
-#define PS_HopTimeBase 74
+#define PS_NumberOfHops    41  //      Numbers of Hops
+#define PS_BoilTime     42    //   Boil Time 
+#define PS_HopTimeBase 43
 #define PS_TimeOfHop(i) ((PS_HopTimeBase)+i)
 /*
-    74       Time Hop  1
-    75       Time Hop  2
-    76       Time Hop  3
-    77       Time Hop  4
-    78       Time Hop  5
-    79       Time Hop  6
-    80       Time Hop  7
-    81       Time Hop  8
-    82       Time Hop  9
-    83       Time Hop 10
+    43       Time Hop  1
+    44       Time Hop  2
+    45       Time Hop  3
+    46       Time Hop  4
+    47       Time Hop  5
+    48       Time Hop  6
+    49       Time Hop  7
+    50       Time Hop  8
+    51       Time Hop  9
+    52       Time Hop 10
 */
-#define  PS_AutomodeStarted    84    //   FLAG Automode Started
+#define  PS_AutomodeStarted    53    //   FLAG Automode Started
 
 //  RESUME
-#define PS_StageResume    85 //      HANDLE Stage
-#define PS_StageTimeLeft    86 //      HANDLE Time Rest
-#define PS_HopAdd    87     //  Hop Add
+#define PS_StageResume    54 //      HANDLE Stage
+#define PS_StageTimeLeft  55 //      HANDLE Time Rest
+#define PS_HopAdd    56     //  Hop Add
 
 //    88 -  89 [ SPACE ]
 /*
@@ -129,7 +126,7 @@ byte readSetting(int addr)
 void updateSetting(int addr,byte value)
 {
 	//EEPROM.update(addr,value);
-EEPROM.write(addr,value);
+	EEPROM.write(addr,value);
 }
 
 word readSettingWord(int addr)

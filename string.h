@@ -17,23 +17,25 @@
 
 typedef const char* str_t;
 
-
+#if BluetoothSupported
 StringConst(BT_Setup,"Bluetooth");
 StringConst(BT_NetworkName,"Name");
 StringConst(BT_UsePin,"Use PIN");
 StringConst(BT_PIN,"PIN:");
 
+#if BT_Menu == true
 StringConst( x_x_x_Ok,          "---  ---  ---  Ok");
 StringConst( x_x_Edit_Ok,       "---  ---  Edit Ok");
 StringConst( Up_Down_Next_x,    "UP   DWN   >>  ---");
 StringConst( Up_Down_Done_x,    "UP   DWN  Done ---");
+#endif
+#endif
 
-StringConst(min,"min");
 
-StringConst( welcome,"BrewManiac 0.01""\xE0");
+StringConst( welcome,"Matt's Brewshed");
 
 #if NoDelayStart == false
-StringConst(To_be_started_in,"To be started in");
+StringConst( To_be_started_in,"To be started in");
 StringConst( Setting_Delay,"Setting Delay");
 StringConst( Delay_Start,"Delay Start?");
 #endif
@@ -41,21 +43,16 @@ StringConst( Delay_Start,"Delay Start?");
 StringConst( Resume_Process,"Resume Process?");
 
 StringConst( In_Pause,"In Pause");
-StringConst( IODINE_TEST,"IODINE  TEST");
 StringConst( AutomaticMode, "AUTOMATIC MODE");
 StringConst( Pump_Prime, "Pump Prime");
 StringConst( Auto_Label, "AUTO -->");
 StringConst( TemperatureReached,"Temp.  Reached");
-StringConst(Add_Malt, "Add Malt");
-StringConst(Remove_Malt, "Remove Malt");
-StringConst(Go_to_next_step,"Go to next step?");
-
-StringConst(START_COOLING,"START  COOLING");
-StringConst(WHIRLPOOL,"WHIRLPOOL");
-StringConst(Timeing_Whirlpool,"Timing Whirlpool");
-
-StringConst(Brewing_Process,"Brewing Process");
-StringConst(Finished,"Finished");
+StringConst( Add_Malt, "Add Malt");
+StringConst( Remove_Malt, "Remove Malt");
+StringConst( Go_to_next_step,"Go to next step?");
+//StringConst( START_COOLING,"START  COOLING");
+StringConst( Brewing_Process,"Brewing Finished");
+StringConst( Finished,"Cheers!");
 
 //button labels
 #if NoDelayStart == false
@@ -94,18 +91,12 @@ StringConst( PWM_Is, "PWM=   %");
 StringConst( Setup, "SETUP MENU");
 StringConst( PID_PWM, "PID -- PWM");
 
-StringConst( Use, "Use");
-StringConst( Electric, "Electric");
-StringConst( Gas, "Gas");
 StringConst( kP, "Constant kP");
 StringConst( kI, "Constant kI");
 StringConst( kD, "Constant kD");
 StringConst( SampleTime, "SampleTime");
 StringConst( WindowSet_ms, "WindowSet ms");
 StringConst( Heat_in_Boil, "Heat in Boil");
-StringConst( Calibration, "Calibration");
-StringConst( Hysteresi, "Hysteresi");
-
 
 StringConst( Unit_Parameters, "Unit Parameters");
 StringConst( Set_Degree, "Set Degrees");
@@ -130,31 +121,19 @@ StringConst( Skip_Add, "Skip Add");
 StringConst( Yes, "Yes");
 StringConst( No, "No");
 StringConst( Skip_Remove, "Skip Remove");
-StringConst( Skip_Iodine, "Skip Iodine");
-StringConst( IodineTime, "IodineTime");
-StringConst( Whirlpool_e, "Whirlpool");
-StringConst( Hot, "Hot");
-StringConst( Cold, "Cold"); // and off
 
 StringConst( Set_Automation, "Set Automation");
 StringConst( Mash_In, "Mash In");
-StringConst( Phytase, "Phytase");
-StringConst( Glucanase, "Glucanase");
-StringConst( Protease, "Protease");
-StringConst( bAmylase, "\xE2""Amylase");
-StringConst( aAmylase1, "\xE0""Amylase1");
-StringConst( aAmylase2, "\xE0""Amylase2");
+StringConst( Mash, "Main Mash");
 StringConst( Mash_out, "Mash Out");
 StringConst( Boil, "Boil");
-StringConst( Cooling, "Cooling");
-StringConst( Whirlpool, "Whirlpool");
 StringConst( Number_Of_Hops, "Number of Hops");
 StringConst( Hops_Number_leftPara, "Hop nmbr#");
 StringConst( right_Para, ")");
 
 StringConst( Hops_Number_x, "Hop #");
 
-StringConst( Manage_Recipes, "Manage Recipes");
+//StringConst( Manage_Recipes, "Manage Recipes");
 
 
 #endif

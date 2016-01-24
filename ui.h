@@ -14,15 +14,12 @@
 
 #define LCD_COLUMN_NUM 20
 
+#ifdef __avr__
 #include <avr/pgmspace.h>
-
+#endif
 #if SupportManualModeCountDown == true
 #define  SupportRunningTimeBlink true
 #endif
-
-//const char* SpaceInRow="                    ";
-//const char* SpaceInRow18="                  ";
-
 
 byte _uiTpDisplayRow;
 byte _uiTpDisplayCol;
@@ -37,8 +34,8 @@ byte _countingTimeDirection;
 unsigned long _countingTimeRef;
 unsigned long _countingTimeDisplay;
 
+#if BluetoothSupported == true
 const byte BluetoothSymbol[8] PROGMEM ={
-
 	B00110,
 	B10101,
 	B01101,
@@ -57,9 +54,9 @@ const byte RevBluetoothSymbol[8] PROGMEM ={
 	B00100,
 	B01000,
 	B00000};
+#endif
 
 const byte CelsiusSymbol[8]  PROGMEM  = {B01000, B10100, B01000, B00111, B01000, B01000, B01000, B00111};  // [0] degree c sybmol 
-const byte FahrenheitSymbol[8] PROGMEM = {B01000, B10100, B01000, B00111, B00100, B00110, B00100, B00100};  // [0] degree f symbol
 
 const byte SetpointSymbol[8]  PROGMEM  = {B11100, B10000, B11100, B00111, B11101, B00111, B00100, B00100};  // [2] SP Symbol
 
@@ -74,7 +71,8 @@ const byte HeatingSymbol[8] PROGMEM   = {
 	B01010, 
 	B01010, 
 	B00000};  // [5] HEAT symbol
-const byte RevHeatingSymbol[8] PROGMEM = {B11111, 
+const byte RevHeatingSymbol[8] PROGMEM = {
+  B11111, 
 	B10101, 
 	B10101, 
 	B10001, 
@@ -115,16 +113,10 @@ void uiInitialize(void)
    	//_uiShowCountingTime=false;
    	_countingTimeDirection=COUNTING_PAUSE;
    
-	lcd.begin(20,4);
-    if(gIsUseFahrenheit)
-    {
-       	CreatecCustomChar(_uibuffer,LcdCharDegree,FahrenheitSymbol);
-    }
-   	else 
-   	{
-   		CreatecCustomChar(_uibuffer,LcdCharDegree,CelsiusSymbol);
-   	}
-   	
+	  lcd.begin(20,4);
+    //lcd.begin(16,2);
+
+   	CreatecCustomChar(_uibuffer,LcdCharDegree,CelsiusSymbol);   	
    	CreatecCustomChar(_uibuffer,LcdCharSetpoint,SetpointSymbol);
 
    	CreatecCustomChar(_uibuffer,LcdCharPump,PumpSymbol);
@@ -225,10 +217,16 @@ void uiClearRow(byte row)
 {	
 	byte i=0;
 	byte num=20;
-	if(row ==0) num=19;
-	else if(row ==2) {i=1; num=19;}
+	if(row == 0) {
+		num=19;
+	}
+	else if ( row ==2 ) {
+		i=1;
+		num=19;
+	}
 	
 	lcd.setCursor(i,row);
+	
 	for(;i<num;i++)
 		lcd.write(' ');
 }
@@ -307,11 +305,11 @@ void uiShowTextAtRow_P(byte row,str_t text,byte alignment,int indent)
 //********************************************************
 void uiChangeTemperatureUnit(bool useF)
 {
-    if(useF)
-    {
-       	CreatecCustomChar(_uibuffer,LcdCharDegree,FahrenheitSymbol);
-    }
-   	else 
+//    if(useF)
+//
+  //     	CreatecCustomChar(_uibuffer,LcdCharDegree,FahrenheitSymbol);
+ //   }
+//else 
    	{
    		CreatecCustomChar(_uibuffer,LcdCharDegree,CelsiusSymbol);
    	}
@@ -370,18 +368,18 @@ boolean _runningTimeHidden;
 void uiRunningTimePrint(unsigned long timeInSeconds)
 {
 
-	unsigned long hour = timeInSeconds / (60*60);
+	unsigned long hour = timeInSeconds / (3600);
 	_uibuffer[0]= (char)((hour/10) + '0');
 	_uibuffer[1]= (char)((hour%10) + '0');
 	_uibuffer[2]=':';
 
-	unsigned long minute =(timeInSeconds - hour * 60*60)/60;
+	unsigned long minute =(timeInSeconds - hour * 3600)/60;
 
 	_uibuffer[3]= (char)((minute/10) + '0');
 	_uibuffer[4]= (char)((minute%10) + '0');
 	_uibuffer[5]=':';
 
-	unsigned long seconds=timeInSeconds - hour*60*60 - minute*60;
+	unsigned long seconds=timeInSeconds - hour*3600 - minute*60;
 
 	_uibuffer[6]=(char)((seconds/10) + '0');
 	_uibuffer[7]=(char)((seconds%10) + '0');
@@ -466,12 +464,7 @@ void uiDisplayTemperatureAndRunningTime(void)
     if(_uiDisplayTemperature)
     {
     	float displayTemp=gCurrentTemperature;
-    	
-    	if(gIsUseFahrenheit) 
-    	{
-    		displayTemp = ConvertC2F(gCurrentTemperature);
-    	}
-        
+     
         #if NoPrint == true
         byte digitNum=sprintFloat((char*)_uibuffer,displayTemp,2);
          
@@ -702,14 +695,7 @@ void uiSettingDegreeSymbol(byte value)
 {
 //	uiSettingFieldClear();
 
-	if(value ==0)
-	{
-		CreatecCustomChar(_uibuffer,LcdCharReserved,CelsiusSymbol);
-	}
-	else
-	{
-		CreatecCustomChar(_uibuffer,LcdCharReserved,FahrenheitSymbol);	
-	}
+	CreatecCustomChar(_uibuffer,LcdCharReserved,CelsiusSymbol);
 
 	lcd.setCursor(18,2);
 	
@@ -744,9 +730,7 @@ void uiSettingTimeInMinutes(byte minutes)
 
 void uiSettingShowTemperature(float temp,byte precision)
 {
-	float displayTemp=temp;
-	if(gIsUseFahrenheit){ displayTemp=ConvertC2F(temp); }
-    uiSettingDisplayField((float)displayTemp,2,LcdCharDegree);
+    uiSettingDisplayField((float)temp,2,LcdCharDegree);
 }
 
 void uiDisplaySettingPercentage(int number)
@@ -769,6 +753,14 @@ void uiClearScreen(void)
 	
 }
 
+void uiReset(void)
+{
+  #if SupportRunningTimeBlink == true  
+    _runningTimeBlinking = false;
+  #endif
+}
+
+
 void uiMenu(str_t text)
 {
 	uiClearRow(3);
@@ -777,11 +769,9 @@ void uiMenu(str_t text)
 
 void uiDisplaySettingTemperature(float settemp)
 {
-	float displayTemp;
-	if(gIsUseFahrenheit){ displayTemp=ConvertC2F(settemp); }
-	else displayTemp = settemp;
+
 #if NoPrint == true
-    int digitNum=sprintFloat((char*)_uibuffer,displayTemp,2);
+    int digitNum=sprintFloat((char*)_uibuffer,settemp,2);
          
     lcd.setCursor(12,1);
     
@@ -790,12 +780,12 @@ void uiDisplaySettingTemperature(float settemp)
     	lcd.write(_uibuffer[i]);
 
 #else
-    int digitNum=numberOfDigitFloat(displayTemp,2);
+    int digitNum=numberOfDigitFloat(settemp,2);
          
     lcd.setCursor(12,1);
     
     for(int i=0;i< 6 - digitNum;i++) lcd.write(' ');
-    lcd.print(displayTemp,2);
+    lcd.print(settemp,2);
 #endif    
     lcd.write(LcdCharSetpoint);
 }
@@ -803,8 +793,12 @@ void uiDisplaySettingTemperature(float settemp)
 void uiClearPwmDisplay(void)
 {
 	lcd.setCursor(1,2);
-	for(int i=0;i<8;i++)
-		lcd.write(' ');
+  #if NoPrint == true 
+  	for(int i=0;i<8;i++)
+		  lcd.write(' ');
+  #else
+    lcd.print ( "        " );
+  #endif
 }
 
 void uiShowPwmLabel(void)
@@ -817,8 +811,7 @@ void uiShowPwmValue(byte pwm)
 {
 	// make it simple, should optimize later
 	lcd.setCursor(5,2);
-	
-	
+
 	lcd.write((pwm==100)? '1':' ');
 	if(pwm==100) lcd.write('0');
 	else lcd.write((pwm/10)? ('0' +(pwm/10)):' ');//100 is maximum, no way it can over 10
@@ -840,27 +833,18 @@ void uiAutoModeTitle(void)
 const char * const  AutoStepNames[] PROGMEM =
 {
 STR( Mash_In),
-STR( Phytase),
-STR( Glucanase),
-STR( Protease), 
-STR( bAmylase),
-STR( aAmylase1),
-STR( aAmylase2),
+STR( Mash),
 STR( Mash_out), 
-STR( Boil), 
-STR( Cooling),
-STR( Whirlpool)
+STR( Boil)
 };
 
-#define BoilingStage 8
-#define CoolingStage 9
-#define WhirlpoolStage 10
+#define BoilingStage 3
 
 void uiAutoModeStage(byte idx)
 {
 	lcd.setCursor(10,0);
-	
-	str_t display = (str_t)pgm_read_word(&(AutoStepNames[idx]));
+
+ str_t display = (str_t)pgm_read_word(&(AutoStepNames[idx]));
 	
 	byte len=LCD_print_P(display);
 	byte i=len+10;
@@ -880,7 +864,7 @@ void uiAutoModeShowHopNumber(byte number)
 }
 
 
-void uiPreparePasueScreen(str_t message)
+void uiPreparePauseScreen(str_t message)
 {
 	uiClearScreen();	
 

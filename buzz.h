@@ -23,14 +23,10 @@ typedef byte SoundId;
 #define SoundIdAddHop 2
 #define SoundIdWaitUserInteraction 3
 #define SoundIdBrewEnd 4
-
 #define SoundIdMashInTempReached SoundIdTemperatureReached
 #define SoundIdBoil SoundIdTemperatureReached
 #define SoundIdDelayTimeout SoundIdTemperatureReached
-#define SoundIdIodineTest  SoundIdTemperatureReached
 
-#define SoundIdUserInteractiveNeeded 0
-#define SoundIdConfirmUser 0
 
 const byte _soundIdTemperatureReached[] PROGMEM ={5,10,3,10,3,10};
 const byte _soundIdCountDown[] PROGMEM ={9,20,20,20,20,20,20,20,20,40}; // 5 seconds
@@ -66,13 +62,13 @@ void buzzStartPlay(SoundId id, boolean repeat)
 	_ptrCurrentNote =_currentSound;
 
 	_ptrCurrentNote ++;	
-	_currentPeriod = (word)pgm_read_byte(_ptrCurrentNote) *25;
+	_currentPeriod = (word)pgm_read_byte(_ptrCurrentNote) * 25;
 	
 	_repeat = repeat;
 	_playing=true;
 	
 	_buzzingTime = millis();
-	digitalWrite (BuzzControlPin, HIGH);
+	digitalWrite ( BuzzControlPin, HIGH );
 	_buzzing=true;
 }
 
@@ -101,7 +97,7 @@ void buzzThread(void)
 	if((gCurrentTimeInMS-_buzzingTime) >= (_currentPeriod + BUZZER_TIME_TOLERANCE))
 	{
 		_numberofNtesToPlay --;
-		if(_numberofNtesToPlay ==0)
+		if(_numberofNtesToPlay == 0)
 		{
 			if(_repeat)
 			{
@@ -118,16 +114,10 @@ void buzzThread(void)
 		_buzzingTime = millis();
 		//else
 		_ptrCurrentNote ++;	
-		_currentPeriod = (word)pgm_read_byte(_ptrCurrentNote) *25;
-				
-		if(_buzzing)
-		{
-			digitalWrite (BuzzControlPin, LOW);
-		}
-		else
-		{
-			digitalWrite (BuzzControlPin, HIGH);
-		}
+		_currentPeriod = (word)pgm_read_byte(_ptrCurrentNote) * 25;
+		
+		digitalWrite ( BuzzControlPin, _buzzing ? LOW : HIGH );
+
 		_buzzing = ! _buzzing;
 	}
 }

@@ -26,24 +26,16 @@
 #define UNOTEST 1
 // MRE168 is MEGA, HD44780s LCD
 #define MRE168 2
-// Setting from default Open ArdBir 
-#define Pcb_ArdBir_DanielXan 3
-// ESP8266
-#define ESP_12 4
 //////////////////////////
 
-#define BOARD Pcb_ArdBir_DanielXan
+#define BOARD UNOTEST
 // not usingI2C_LCD by default 
-#define I2C_LCD true
+#define I2C_LCD false
 
 // modify LCD hardware connection following
 
 //hardware setup
 const byte SensorPin=7;
-#define PumpControlPin  6
-#define BuzzControlPin 8
-#define HeatControlPin  9
-
 
 #if BOARD == MRE168
 #define ButtonUpPin    A3
@@ -62,21 +54,9 @@ const byte SensorPin=7;
 #define ButtonEnterPin  A1
 #endif
 
-
-#if BOARD == Pcb_ArdBir_DanielXan
-#define ButtonUpPin    A2
-#define ButtonDownPin   A3
-#define ButtonStartPin  A0
-#define ButtonEnterPin  A1
-#endif
-
-#if BOARD == ESP_12
-#define ButtonUpPin    D2
-#define ButtonDownPin   D3
-#define ButtonStartPin  D0
-#define ButtonEnterPin  D1
-#endif
-
+#define PumpControlPin  6
+#define BuzzControlPin 8
+#define HeatControlPin  9
 
 #define BluetoothSupported false
 #define UseSoftwareSerial false
@@ -107,13 +87,13 @@ const byte SoftwareSerialTx = 11;
 #define USE_DS18020 true
 #endif
 
-#define DEBUG 
+
 
 #define ElectronicOnly true
 
 #define PerformanceProfiling false
 
-#define NoPrint false
+#define NoPrint true
 #define BT_STRICT true
 #define BT_TemperatureReportPeriod 10000
 
@@ -139,15 +119,15 @@ const byte SoftwareSerialTx = 11;
 #define ButtonFatFingerTolerance 50  // in ms
 
 #if USE_DS18020
-//#define ONEWIRE_SEARCH 0
-//#define ONEWIRE_CRC16 0
+#define ONEWIRE_SEARCH 0
+#define ONEWIRE_CRC16 0
 #include <OneWire.h>
 #endif
 
 #if I2C_LCD == true
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-	LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
+	LiquidCrystal_I2C lcd(0x27, 2, 1);
 #else
 #include <LiquidCrystal.h>
 	LiquidCrystal lcd(A4, A5, 2, 3, 4, 5);
@@ -164,8 +144,8 @@ const byte SoftwareSerialTx = 11;
 //{debug
 //overrite definition to save some memory
 #if BOARD == UNOTEST
-#define FakeHeating true
-#define USE_DS18020 false
+#define FakeHeating false
+#define USE_DS18020 true
 
 #define SupportAutoModeRecovery true
 #define SupportManualModeCountDown false
@@ -180,19 +160,6 @@ const byte SoftwareSerialTx = 11;
 #define BT_Menu false
 #endif
 #endif
-
-#define SerialDebug true
-
-
-
-#define C_MASHIN_STAGE  0
-#define C_MAINMASH_STAGE  1
-#define C_MASHOUT_STAGE  2
-#define C_NUMHOPS_STAGE  3
-#define C_BOIL_STAGE  4
-#define C_HOPS_STAGE  5
-
-
 //}debug
 // *************************
 //*  global variables
@@ -221,9 +188,12 @@ boolean gIsUseFahrenheit;
 typedef	void (*SetupFunc)(void);
 typedef	void (*EventHandlerFunc)(byte);
 
+#if 0 //opt-code
+void switchApplication(SetupFunc setup,EventHandlerFunc handler);
 
+#else
 void switchApplication(byte screenId);
-
+#endif
 
 void backToMain(void);
 
@@ -259,6 +229,12 @@ void btMenuSetup(void);
 void btMenuEventHandler(byte);
 #endif
 
+
+
+//#define ConvertF2C(d) (((d)-32)/1.8)
+//#define ConvertC2F(d) (((d)*1.8)+32)
+
+
 #if BluetoothSupported == true
 
 //Stage
@@ -266,8 +242,8 @@ void btMenuEventHandler(byte);
 // 1 -6 rest, 
 // 7 mashout
 #define StageBoil 		8
-//#define StageCooling 		9
-//#define StageWhirlpool  10
+#define StageCooling 		9
+#define StageWhirlpool  10
 #define StageDelayStart 11
 #define StageManualMode 100
 #define StageIdleScreen 101
@@ -309,7 +285,25 @@ typedef struct _CScreen{
 	EventHandlerFunc eventHandler;
 }CScreen;
 
+#if 0 //opt-code
 
+#define MAIN_SCREEN 	&mainSetup,&mainEventHandler
+
+#define SETUP_SCREEN 	&menuSetup,&menuEventHandler
+
+#define PID_SETTING_SCREEN 	&settingPidSetup,&settingPidEventHandler
+
+#define UNIT_SETTING_SCREEN 	&settingUnitSetup,&settingUnitEventHandler
+
+#define AUTO_SETTING_SCREEN 	&settingAutoSetup,&settingAutoEventHandler
+
+
+#define MANUAL_MODE_SCREEN 	&manualModeSetup,&manualModeEventHandler
+
+#define AUTO_MODE_SCREEN 	&autoModeSetup,&autoModeEventHandler
+
+
+#else
 #define MAIN_SCREEN 0
 #define SETUP_SCREEN 1
 #define PID_SETTING_SCREEN 2
@@ -359,7 +353,7 @@ const CScreen allScreens[]  =
 }
 #endif
 };
-
+#endif
 
 byte _currentEventMask;
 //#define setEventMask(a) _currentEventMask=(a)
@@ -416,23 +410,16 @@ unsigned long tmGetRemainingTime(void)
 
 unsigned long tmPauseTimer(void)
 {
+	//[TODO:] there are chance that _gTimeout is ZERO
+	// after 50 days...
+	
+	if(_gTimeout ==0) return 0;
+	//else
+	
 
-  unsigned long ret = 0;
-
-  #ifdef DEBUG
-    Serial.println ( "In tmPauseTimer" );
-  #endif
-  
-	if( _gTimeout !=0 ) {
-    ret = (_gTimeout - gCurrentTimeInMS);
-	}
-
-  _gTimeout=0;
-  _gAuxTimeout=0;
-
-  #ifdef DEBUG
-    Serial.println ( "Reset _gTimeout and _gAuxTimeout" );
-  #endif  
+	_gTimeout=0;
+	_gAuxTimeout=0;
+	unsigned long ret=(_gTimeout - gCurrentTimeInMS);
 	return ret;
 }
 
@@ -444,7 +431,7 @@ void tmSetAuxTimeoutAfter(unsigned long duration)
 void tmSetTimeoutAfter(unsigned long duration)
 {
 	_gTimeout = gCurrentTimeInMS + duration;
-#ifdef DEBUG
+#if 0
 	Serial.print(F("setTimeoutAfter:"));
 	Serial.print(duration);
 	Serial.print(F(",current="));
@@ -462,16 +449,12 @@ void tmInitialize(void)
 boolean tmTiming(void)
 {
 	gCurrentTimeInMS=millis();
-
-
+	
 	gCurrentTimeInSec = (gCurrentTimeInMS - gSystemStartTime) / 1000;
 	
 	if(_gTimeout
 	 &&  _gTimeout <= gCurrentTimeInMS)
 	{
-    #ifdef DEBUG
-      Serial.println ( "gTimeout Timeout" );
-    #endif
 		_gTimeout = 0;
 		_isAuxTimeout=false;
 		return true;
@@ -480,9 +463,6 @@ boolean tmTiming(void)
 	if(_gAuxTimeout
 	 &&  _gAuxTimeout <= gCurrentTimeInMS)
 	{
-    #ifdef DEBUG
-      Serial.println ( "gAuxTimeout Timeout" );
-    #endif
 		_gAuxTimeout = 0;
 		_isAuxTimeout=true;
 		return true;
@@ -760,14 +740,14 @@ void tpInitialize(void)
 {
 #if USE_DS18020
 	// Change DS18B20 resolution
-  dsInizialize();
-  ds.write(DSCMD_WRITE_SCRATCHPAD);   // Write scratchpad
-  ds.write(0);            // TL
-  ds.write(0);            // TH
-  ds.write(DS_RESOLUTION);   // Configuration Register
+	dsInizialize();
+  	ds.write(DSCMD_WRITE_SCRATCHPAD);   // Write scratchpad
+  	ds.write(0);            // TL
+  	ds.write(0);            // TH
+  	ds.write(DS_RESOLUTION);   // Configuration Register
 
 	dsInizialize();  	
- 	ds.write(DSCMD_COPY_SCRATCHPAD);         // Copy Scratchpad to DS EEPROM
+  	ds.write(DSCMD_COPY_SCRATCHPAD);         // Copy Scratchpad to DS EEPROM
 	
 #endif
 
@@ -783,24 +763,24 @@ void tpReadTemperature(void)
 #if USE_DS18020 == true
 
 	dsInizialize();
+  	
   	if (_isConverting == false) 
   	{
 	  	// start conversion and return
     	ds.write(DSCMD_CONVERT_T, 0);
     	_isConverting = true;
-     
     	return;
   	}
   	// else if convert start 
   	//if (_isConverting) 
   	//{ 
-
+  	
   	// check for conversion if it isn't complete return if it is then convert to decimal
-
+    //byte busy = ds.read_bit();
     if (ds.read_bit() == 0) 
     	return;
-
-    // reset & "select" again
+    
+	// reset & "select" again
     dsInizialize();
     
     // request data
@@ -811,17 +791,17 @@ void tpReadTemperature(void)
     }
 
     	/* add this routine for crc version */
-    if ( OneWire::crc8(_sensorData, 8) != _sensorData[8]) {  
-      //if checksum fails start a new conversion right away
-      // reissue convert command
+    if ( OneWire::crc8(_sensorData, 8) != _sensorData[8]) {  //if checksum fails start a new conversion right away
+		// reissue convert command
     	dsInizialize();      
-      ds.write(DSCMD_CONVERT_T, 0);
-      _isConverting = true;
-    	return;
+      	ds.write(DSCMD_CONVERT_T, 0);
+      	_isConverting = true;
+      	
+      	return;
     }
-
-    // temp data verified, calculate temperature value
+	// data got!
     unsigned int raw = (_sensorData[1] << 8) + _sensorData[0];
+    
     gCurrentTemperature = (raw & DS_MASK_RESOLUTION) * DS_DEG_RESOLUTION;
 
     //apply calibration 
@@ -879,6 +859,10 @@ void heatLoadParameters(void)
 					
 	_heatWindowSize = readSetting(PS_WindowSize);    
  	thePID.SetSampleTime((int)readSetting(PS_SampleTime) * 250);
+
+#if ElectronicOnly != true
+ 	_isUseGas =readSetting(PS_UseGas);
+#endif
 
  	gBoilStageTemperature=(float)readSetting(PS_BoilTemp);
  	gBoilHeatOutput=readSetting(PS_BoilHeat);
@@ -976,23 +960,46 @@ void heatThread(void)
   	
   	float Rapporto, Delta, IsteresiProporzionale;
 
-
-    DeltaPID = 3.50;
-    if (pidInput >= gBoilStageTemperature - DeltaPID)  {
-      DeltaPID = 1;
-    }
-    IsteresiProporzionale = 0.0;
-
+#if ElectronicOnly != true  
+  	if (_isUseGas) 
+  	{
+    	DeltaPID =(float)readSetting(PS_Hysteresi) / 10.0;    
+    	
+    	IsteresiProporzionale = DeltaPID / pidInput;
+    	thePID.SetSampleTime(8000);
+    	_heatWindowSize = 160;
+  	} 
+  	else 
+#endif
+  	{  
+	 	DeltaPID = 3.50;
+    	if (pidInput >= gBoilStageTemperature - DeltaPID) 
+    		DeltaPID = 1;
+    	IsteresiProporzionale = 0.0;
+  	}  
+  
   	Delta    = pidSetpoint - (pidInput + IsteresiProporzionale);
   	Rapporto = Delta / DeltaPID;
   
   	unsigned long now = millis();
   
+  
   	if (_isPIDMode) //PID mode
   	{
     	if (Rapporto < 1.00)
     	{
-     		thePID.Compute();   // was 6, getting close, start feeding the PID -mdw
+#if ElectronicOnly != true    	
+      		if (_isUseGas == 1) 
+      		{
+        		pidOutput = round025(Rapporto) * 255;
+        		if (Rapporto < 0.20) pidOutput = 40.00;
+        		if (Rapporto < 0.10) pidOutput =  0.00;
+      		} 
+      		else 
+#endif
+      		{
+        		thePID.Compute();   // was 6, getting close, start feeding the PID -mdw
+      		}
     	} 
     	else // if (Rapporto < 1.00)
     	{
@@ -1005,15 +1012,15 @@ void heatThread(void)
 	if (pidInput >= pidSetpoint && pidSetpoint >= gBoilStageTemperature) 
 		pidOutput = gBoilHeatOutput * 255.0 / 100.0;
   
-#ifdef DEBUG //  SerialDebug == true
-    	Serial.print("PID.Compute: Input=");
-      Serial.print(pidInput);
-      Serial.print(", setpoint=");
-      Serial.print(pidSetpoint);
-      Serial.print(",boil stage temp=");
-      Serial.print(gBoilStageTemperature);
-      Serial.print(",pid output=");
-      Serial.println(pidOutput);
+#if 0 //  SerialDebug == true
+    	Serial.print("PID.Compute");
+        Serial.print(pidInput);
+        Serial.print(",");
+        Serial.print(pidSetpoint);
+        Serial.print(",");
+        Serial.print(gBoilStageTemperature);
+        Serial.print(",");
+        Serial.println(pidOutput);
 #endif
 
 	// PWM
@@ -1179,12 +1186,12 @@ void pumpThread(void)
       		 // inside
       		 if(_pumpPhysicalOn)
       		 {
-				      pumpPhysicalOff();
-				    uiPumpStatus(PumpStatus_On_PROGRAM_OFF);
+				pumpPhysicalOff();
+				uiPumpStatus(PumpStatus_On_PROGRAM_OFF);
         		_isPumpRestChanged = true;
 
-			    }
-			    return;
+			}
+			return;
     	} 
     	else 
     	{
@@ -1195,19 +1202,19 @@ void pumpThread(void)
         		{
         			if(!_pumpPhysicalOn)
         			{
-						    pumpPhysicalOn();
-						    uiPumpStatus(PumpStatus_On);
+						pumpPhysicalOn();
+						uiPumpStatus(PumpStatus_On);
         				_isPumpRestChanged = true;
-					    }
+					}
         		} 
         		else 
         		{ 
         			if(_pumpPhysicalOn)
         			{
-					    	pumpPhysicalOff();
-					    	uiPumpStatus(PumpStatus_On_PROGRAM_OFF);
+						pumpPhysicalOff();
+						uiPumpStatus(PumpStatus_On_PROGRAM_OFF);
         				_isPumpRestChanged = true;
-					    }
+					}
         		}
       		} 
       		else // not tempreached
@@ -1356,7 +1363,10 @@ void displayTempShift50Divide10(int data)
 {
 	float fvalue=((float)data -50.0) /10.0;
 	
-	uiSettingShowTemperature(fvalue,1);
+	if(gIsUseFahrenheit)
+		uiSettingShowTemperature(fvalue - 32.0/1.8,1);
+	else
+		uiSettingShowTemperature(fvalue,1);
 }
 
 #if ElectronicOnly != true	
@@ -1379,12 +1389,17 @@ byte _currentPidSetting;
 
 // table implementation takes up a lot of memory.
 // change to hard-coded.
-#define PID_SETTING_NUM 8
+#define PID_SETTING_NUM 9
 void settingPidEditSetting(void)
 {	
 	int value=(int)readSetting(PS_AddrOfPidSetting(_currentPidSetting));
 	
 	//editItem(str_t label, byte value, byte max, byte min,CDisplayFunc displayFunc)
+#if ElectronicOnly != true	
+	if(_currentPidSetting==0)
+		editItem(STR(Use),value,1,0,&displayHeatingSource);
+	else 
+#endif	
 	if(_currentPidSetting==1)
 		editItem(STR(kP),value,200,0,& displayOffset100);
 	else if(_currentPidSetting==2)
@@ -1397,9 +1412,12 @@ void settingPidEditSetting(void)
 		editItem(STR(WindowSet_ms),value,7500/250,4000/250,& displayMultiply250);
 	else if(_currentPidSetting==6)
 		editItem(STR(Heat_in_Boil),value,100,0,& displayPercentage);
-//	else if(_currentPidSetting==7)
-//		editItem(STR(Calibration),value,100,0,&displayTempShift50Divide10);
-
+	else if(_currentPidSetting==7)
+		editItem(STR(Calibration),value,100,0,&displayTempShift50Divide10);
+#if ElectronicOnly != true		
+	else if(_currentPidSetting==8)
+		editItem(STR(Hysteresi),value,100,0,&displayDivide10);
+#endif
 }
 
 void settingPidSetup(void)
@@ -1424,6 +1442,22 @@ void settingPidEventHandler(byte)
 		//go to next setting
 		_currentPidSetting ++;		
 
+#if ElectronicOnly != true
+		if(readSetting(PS_UseGas))
+		{
+			// unavailable setting: 1,2,3,4,5
+			if(_currentPidSetting ==1) _currentPidSetting=6;
+			
+			if(_currentPidSetting == PID_SETTING_NUM) 
+			{
+				// last item;
+				uiClearSettingRow();
+				switchApplication(SETUP_SCREEN);
+				return;
+			}
+		}
+		else
+#endif
 		{
 			// use electric, // unavailable setting: last one
 			if(_currentPidSetting == (PID_SETTING_NUM -1)) 
@@ -1460,7 +1494,7 @@ void settingPidEventHandler(byte)
 //*  Unit Parameters settings
 // *************************
 byte _currentUnitSetting;
-#define UINIT_ITEM_NUM 15
+#define UINIT_ITEM_NUM 18
 
 void displayDegreeSymbol(int value)
 {
@@ -1523,7 +1557,12 @@ void displaySimpleTemperature(int value)
 #define WhirlpoolCold 1
 #define WhirlpoolOff 0
 
-
+void displayHotColdOff(int value)
+{
+	if (value==0) uiSettingDisplayText(STR(Off));
+	else if (value==WhirlpoolCold) uiSettingDisplayText(STR(Cold));
+	else uiSettingDisplayText(STR(Hot));
+}
 
 void settingUnitDisplayItem(void)
 {
@@ -1535,8 +1574,7 @@ void settingUnitDisplayItem(void)
 	else if(_currentUnitSetting==1)
 		editItem(STR(Sensor),value,1,0,&displayInsideOutside);
 	else if(_currentUnitSetting==2)
-//		editItem(STR(Temp_Boil),value,105,90,&displaySimpleTemperature);
-    editItem(STR(Temp_Boil),value,30,20,&displaySimpleTemperature);    
+		editItem(STR(Temp_Boil),value,105,90,&displaySimpleTemperature);
 	/*else if(_currentUnitSetting==3) 
 	// ********* skip, for internal usage always use C
  		editItem(STR(Temp_Boil),value,105,90,&displaySimpleInteger);*/
@@ -1563,12 +1601,12 @@ void settingUnitDisplayItem(void)
 		editItem(STR(Skip_Add),value,1,0,&displayYesNo);
 	else if(_currentUnitSetting==14)
 		editItem(STR(Skip_Remove),value,1,0,&displayYesNo);
-//	else if(_currentUnitSetting==15)
-//		editItem(STR(Skip_Iodine),value,1,0,&displayYesNo);
-//	else if(_currentUnitSetting==16)
-//		editItem(STR(IodineTime),value,90,0,&displayTimeOff);
-//	else if(_currentUnitSetting==17)
-//		editItem(STR(Whirlpool),value,2,0,&displayHotColdOff);
+	else if(_currentUnitSetting==15)
+		editItem(STR(Skip_Iodine),value,1,0,&displayYesNo);
+	else if(_currentUnitSetting==16)
+		editItem(STR(IodineTime),value,90,0,&displayTimeOff);
+	else if(_currentUnitSetting==17)
+		editItem(STR(Whirlpool),value,2,0,&displayHotColdOff);
 }
 
 // Initialization of the screen
@@ -1598,7 +1636,7 @@ void settingUnitEventHandler(byte)
 		_currentUnitSetting++;
 		
 		// use C only internally.
-		if(_currentUnitSetting== 11 || _currentUnitSetting== 3 )
+		if(_currentUnitSetting== 11 || _currentUnitSetting== 3)
 			_currentUnitSetting ++;
 		if(UINIT_ITEM_NUM == _currentUnitSetting)
 		{
@@ -1659,7 +1697,7 @@ void settingAutomationDisplayItem(void)
 {
 	int value;
 	
-	if(_editingStage <= C_MASHOUT_STAGE ) // from MashIn,Main Mash,MashOut
+	if(_editingStage <=7) // from MashIn,Phytase,Glucanase,Protease,bAmylase,aAmylase1,aAmylase2,MashOut
 	{
 		if(_editingStageAux==0)
 			value = readSettingWord(PS_StageTemperatureAddr(_editingStage));
@@ -1674,24 +1712,24 @@ void settingAutomationDisplayItem(void)
 		//9. boil time
 		//10. time hop number #
 	
-	if( _editingStageAux == 0 )  // temperature editing
+	if( _editingStageAux == 0   // temerature editing
+		&& _editingStage>0 && _editingStage < 6) // except MashIn/MashOut, and in Temperature editing
+		uiMenu(STR(Up_Down_Skip_Ok));
+	else
 		uiMenu(STR(Up_Down_x_Ok));
 			
-	if(_editingStage == C_MASHIN_STAGE)
+	if(_editingStage ==0)
 	{
 		// Mash In:temp only
 		editItem(STR(Mash_In),value,ToTempInStorage(75),ToTempInStorage(20),&displayStageTemperature);
 	}
-	else if(_editingStage == C_MAINMASH_STAGE )
+	else if(_editingStage ==1)
 	{
 		if (_editingStageAux == 0)
-			//editItem(STR(Mash),value,ToTempInStorage(70),ToTempInStorage(60),&displayStageTemperature);
-      editItem(STR(Mash),value,ToTempInStorage(50),ToTempInStorage(25),&displayStageTemperature);     
+			editItem(STR(Phytase),value,ToTempInStorage(55),ToTempInStorage(25),&displayStageTemperature);
 		else
-			//editItem(STR(Mash),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);	
-      editItem(STR(Mash),value,50,MIN_STAGE_TIME,&displayTime);
+			editItem(STR(Phytase),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);	
 	}
-/* 
 	else if(_editingStage ==2)
 	{
 		if (_editingStageAux == 0)
@@ -1727,31 +1765,27 @@ void settingAutomationDisplayItem(void)
 		else
 			editItem(STR(aAmylase2),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);	
 	}
- */
-	else if(_editingStage == C_MASHOUT_STAGE )
+	else if(_editingStage ==7)
 	{
 		// MashOut
 		if (_editingStageAux == 0)
-			//editItem(STR(Mash_out),value,ToTempInStorage(80),ToTempInStorage(75),&displayStageTemperature);
-      editItem(STR(Mash_out),value,ToTempInStorage(30),ToTempInStorage(22),&displayStageTemperature);     
+			editItem(STR(Mash_out),value,ToTempInStorage(80),ToTempInStorage(75),&displayStageTemperature);
 		else
-			//editItem(STR(Mash_out),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);	
-    editItem(STR(Mash_out),value,10,1,&displayTime);       
+			editItem(STR(Mash_out),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);	
 	}
-	else if(_editingStage == C_NUMHOPS_STAGE )
+	else if(_editingStage ==8)
 	{
 		// 8. number of hops
 		value =readSetting(PS_NumberOfHops);
 		// boiling, need to input 
 		editItem(STR(Number_Of_Hops),value,10,0,&displaySimpleInteger);
 	}
-	else if(_editingStage == C_BOIL_STAGE )
+	else if(_editingStage ==9)
 	{
 		// 9. boil time
 		value =readSetting(PS_BoilTime);
 		// boiling, need to input 
-		//editItem(STR(Boil),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);
-      editItem(STR(Boil),value,10,1,&displayTime);
+		editItem(STR(Boil),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);
 	}
 	else //if(_editingStage ==10)
 	{
@@ -1769,7 +1803,7 @@ void settingAutomationDisplayItem(void)
 
 void settingAutoSetup(void)
 {
-	_editingStage= C_MASHIN_STAGE;
+	_editingStage=0;
 	_editingStageAux=0;
 	settingAutomationDisplayItem();
 }
@@ -1780,18 +1814,18 @@ void settingAutoEventHandler(byte)
 	{
 		int value=editItemValue();
 		
-		if(_editingStage == C_MASHIN_STAGE )
+		if(_editingStage ==0)
 		{			
 			
 			_editingStageAux=0;
 		}
-		if(_editingStage <= C_MASHOUT_STAGE)
+		if(_editingStage <= 7)
 		{
 			if(_editingStageAux ==0)
 			{
 				updateSettingWord(PS_StageTemperatureAddr(_editingStage),value);
 			
-				if(_editingStage== C_MASHIN_STAGE ) // no time needed for Mash In
+				if(_editingStage==0) // no time needed for Mash In
 					_editingStage++;
 				else
 					_editingStageAux=1;
@@ -1804,13 +1838,13 @@ void settingAutoEventHandler(byte)
 				_editingStage++;
 			}
 		}
-		else if(_editingStage == C_NUMHOPS_STAGE )
+		else if(_editingStage == 8)
 		{
 			updateSetting(PS_NumberOfHops,(byte)value);
 			//number of hops
 			_editingStage++;
 		}
-		else if(_editingStage == C_BOIL_STAGE )
+		else if(_editingStage == 9)
 		{
 			updateSetting(PS_BoilTime,(byte)value);
 			
@@ -1846,11 +1880,10 @@ void settingAutoEventHandler(byte)
 		//next item
 		settingAutomationDisplayItem();
 	}
-/* 
 	else if(btnIsStartPressed)
 	{
 		// only handle in stage 1 to 5
-		if((_editingStage >= C_MAINMASH_STAGE && _editingStage < C_MASHOUT_STAGE)
+		if((_editingStage >=1 && _editingStage <6)
 			&& _editingStageAux == 0 )
 		{
 			// skip the stage, set the time to zero, and move to 
@@ -1861,31 +1894,30 @@ void settingAutoEventHandler(byte)
 			settingAutomationDisplayItem();
 		}
 	}
- */
 	else if(btnIsUpPressed)
 	{
-		if(_editingStage < C_NUMHOPS_STAGE && _editingStageAux == 0)
+		if(_editingStage <8 && _editingStageAux == 0)
 			editItemChange(+4);
 		else
 			editItemChange(+1);
 	}
 	else if(btnIsDownPressed)
 	{
-		if(_editingStage < C_NUMHOPS_STAGE && _editingStageAux == 0)
+		if(_editingStage <8 && _editingStageAux == 0)
 			editItemChange(-4);
 		else
 			editItemChange(-1);
 	}
 	else if(btnIsUpContinuousPressed)
 	{
-		if(_editingStage < C_NUMHOPS_STAGE && _editingStageAux == 0)
+		if(_editingStage <8 && _editingStageAux == 0)
 			editItemChange(+12);
 		else
 			editItemChange(+4);
 	}
 	else if(btnIsDownContinuousPressed)
 	{
-		if(_editingStage < C_NUMHOPS_STAGE && _editingStageAux == 0)
+		if(_editingStage <8 && _editingStageAux == 0)
 			editItemChange(-12);
 		else
 			editItemChange(-4);
@@ -2162,15 +2194,6 @@ float _minAdjustTemp;
 
 void togglePwmInput(void)
 {
-
-    #ifdef DEBUG
-      Serial.print ( "gCurrentTemperature: " );
-      Serial.print ( gCurrentTemperature );
-      Serial.print ( " gSettingTemperature: " );
-      Serial.print ( gSettingTemperature );  
-      Serial.print ( " gBoilStageTemperature: " );
-      Serial.println ( gBoilStageTemperature );   
-    #endif        
 			//turn on/off PWM
 			if(gCurrentTemperature >= gSettingTemperature
 				&& gSettingTemperature >= gBoilStageTemperature)
@@ -2247,7 +2270,8 @@ boolean processAdjustButtons(void)
 			adjustPwm(+1);
 		else
 		{
-			adjustSp(+0.25);
+			if(gIsUseFahrenheit) adjustSp(+0.25/1.8);
+			else adjustSp(+0.25);
 		}
 	}
 	else if(btnIsDownPressed)
@@ -2256,7 +2280,8 @@ boolean processAdjustButtons(void)
 			adjustPwm(-1);
 		else
 		{
-			adjustSp(-0.25);
+			if(gIsUseFahrenheit) adjustSp(-0.25/1.8);
+			else adjustSp(-0.25);
 		}
 	}
 	else if(btnIsUpContinuousPressed)
@@ -2265,7 +2290,8 @@ boolean processAdjustButtons(void)
 			adjustPwm(+2);
 		else
 		{
-			adjustSp(+0.75);
+			if(gIsUseFahrenheit) adjustSp(+0.75/1.8);
+			else adjustSp(+0.75);
 		}
 	}
 	else if(btnIsDownContinuousPressed)
@@ -2274,7 +2300,8 @@ boolean processAdjustButtons(void)
 			adjustPwm(-2);
 		else
 		{
-			adjustSp(-0.75);
+			if(gIsUseFahrenheit) adjustSp(-0.75/1.8);
+			else adjustSp(-0.75);
 		}
 	}
 	else
@@ -2540,10 +2567,10 @@ void manualModeEventHandler(byte event)
 #define AS_AskMaltRemove   11
 #define AS_Boiling		   12
 
-//#define AS_Whirlpool       13
-//#define AS_IodineTest      14
+#define AS_Whirlpool       13
+#define AS_IodineTest      14
 #define AS_Pause       15
-//#define AS_Cooling       16
+#define AS_Cooling       16
 #define AS_Finished       17
 
 
@@ -2685,7 +2712,7 @@ byte autoModeGetRecoveryTime(void)
 		if( autoModeLastRecoveryTime > value)
 		{
 			#if SerialDebug == true
-			Serial.print(F("RecoveryTime: "));
+			Serial.print(F("RecoveryTime-"));
 			Serial.println(value);
 			#endif
 			autoModeLastRecoveryTime = value;
@@ -2748,13 +2775,13 @@ void autoModeNextMashingStep(void)
 	}
 	pumpRestSetEnabled(false);
 	
-	if(_mashingStep < C_MASHOUT_STAGE )
+	if(_mashingStep <=6)
 	{
 		// pump is off at the time AddMalt
 		if(readSetting(PS_PumpOnMash)) pumpOn();
 		else pumpOff();
 	}
-	else if(_mashingStep ==  C_MASHOUT_STAGE )
+	else if(_mashingStep ==7)
 	{
 		if(readSetting(PS_PumpOnMashOut)) pumpOn();
 		else pumpOff();
@@ -2771,13 +2798,58 @@ void autoModeEnterMashing(void)
 	setEventMask(TemperatureEventMask | ButtonPressedEventMask | TimeoutEventMask | PumpRestEventMask);
 
 	_askingSkipMashingStage = false;
-	_mashingStep = C_MASHIN_STAGE; // 0 is mash in , real mashing starts from 1
+	_mashingStep = 0; // 0 is mash in , real mashing starts from 1
 	autoModeNextMashingStep();
 }
 
+void autoModeEnterIodineTest(void)
+{
+	_state = AS_IodineTest;
+	
+	uiPreparePauseScreen(STR(IODINE_TEST));
+	uiMenu(STR(x_x_Ok_x));
 
+	byte iodineTime=readSetting(PS_IodineTime);
+	if(iodineTime)
+	{
+		// timer, else wait until user input
+		// dont' change event, just ignore the temperature event
+		uiRunningTimeShowInitial(iodineTime * 60);
+		// [IMPORTANT!] cast is needed
+		tmSetTimeoutAfter((unsigned long)iodineTime * 60 *1000);
+		buzzPlaySound(SoundIdIodineTest);
+		uiRunningTimeStartCountDown(iodineTime * 60);
+	}
+	else
+	{
+		uiRunningTimeShowInitial(0);
+		buzzPlaySoundRepeat(SoundIdUserInteractiveNeeded);
+	}
+	
+	#if BluetoothSupported == true
+	btReportEvent(RemoteEventIodineTest);
+	#endif
+	
+}
 
+void autoModeIodineTestToMashout(void)
+{
+	uiRunningTimeStop();
+	buzzMute();
+	// restore Screen
 
+	uiClearScreen();
+	
+	uiAutoModeTitle();
+	// temperateure position
+	uiTempDisplaySetPosition(TemperatureAutoModePosition);
+	//phase name, setting point, and counting time will be shown
+	// in autoModeNextMashingStep()
+	// restore Mashing 
+	_state = AS_Mashing;
+	autoModeNextMashingStep();
+	
+}
 void autoModeEnterAskRemoveMalt(void)
 {
 	_state = AS_AskMaltRemove;
@@ -2808,11 +2880,6 @@ boolean _savedHeating;
 boolean _savedPump;
 void autoModePause(unsigned long time)
 {	
-
-  #ifdef DEBUG
-    Serial.print ( "Pausing, time passed : " );
-    Serial.println ( time );
-   #endif   
 	_stateBeforePause = _state;
 	_state = AS_Pause;
 	// stop Heating & pump
@@ -2836,16 +2903,6 @@ void autoModePause(unsigned long time)
 
 void autoModeExitPause(void)
 {
-
-  #ifdef DEBUG
-    Serial.print ( "Restoring to state: " );
-    Serial.println ( _stateBeforePause );
-    Serial.print ( "Saved time: " );
-    Serial.println ( _savedTime );
-    Serial.print ( "Mashing step: " );
-    Serial.println ( _mashingStep );    
-   #endif    
-   
 	// restore state
 	_state = _stateBeforePause;
 	
@@ -2890,11 +2947,6 @@ void autoModeExitPause(void)
 	}
 		
 	// menu is different for mashin & mashing
-  #ifdef DEBUG
-    Serial.print ( "Before UI set, state : " );
-    Serial.println ( _state );
-   #endif 
-    
 	if(_state == AS_MashIn)
 		uiMenu(STR(Up_Down_Pause_x));
 	else
@@ -2914,15 +2966,19 @@ void autoModeMashingStageFinished(void)
 #if SupportAutoModeRecovery == true
 	autoModeRecoveryTimeTracking = false;
 #endif
-  #ifdef DEBUG
-    Serial.print ( "Mashing stage finished, current stage: " );
-    Serial.println ( _mashingStep );
-  #endif
-          
 	//[TODO:] make sure step 6 , beta 2 is non-skippable.
-	if(_mashingStep <  C_MASHOUT_STAGE ) // step 7 = mashout
+	if(_mashingStep < 7) // step 7 = mashout
 	{
+		if(_mashingStep == 6
+			&& readSetting(PS_SkipIodineTest) ==0)
+		{
+			// before MashOut(7) and not Skip Iodine Test
+			autoModeEnterIodineTest();
+		}
+		else
+		{
 			autoModeNextMashingStep();
+		}
 	}
 	else
 	{
@@ -2932,10 +2988,6 @@ void autoModeMashingStageFinished(void)
 			else
 				autoModeEnterAskRemoveMalt();
 	}
-  #ifdef DEBUG
-    Serial.print ( "Next stage: " );
-    Serial.println ( _mashingStep );
-  #endif
 }
 
 //*********************************
@@ -3152,27 +3204,128 @@ void autoModeEnterDelayTimeInput(void)
 }
 #endif
 //******************************
-
+// Cooling & Whirlpool
 
 bool _stageConfirm;
+
+void autoModeCoolingAsk(const char* msg)
+{
+	_stageConfirm=false;
+
+	//dismiss Temperature & running time
+	uiTempDisplayHide(); 
+	uiRunningTimeStop();
+	
+	uiClearScreen();
+	
+	uiSubTitle(msg);
+	
+	uiMenu(STR(Continue_Yes_No));
+}
+
+void autoModeEnterCooling(void)
+{
+	
+	uiClearPrompt();
+	uiClearSubTitleRow();
+	
+	uiAutoModeTitle();
+	uiAutoModeStage(CoolingStage);
+	gSettingTemperature = 30.0;
+	// temperature at automode
+	uiTempDisplaySetPosition(TemperatureAutoModePosition);
+	uiDisplaySettingTemperature(gSettingTemperature);
+	
+	uiRunningTimeShowInitial(0);
+	uiRunningTimeStart();
+	
+	uiMenu(STR(Up_Down_x_Pmp));
+	
+	setAdjustTemperature(30,10);
+	_isEnterPwm=false;
+	
+	
+	#if BluetoothSupported == true
+	btReportCurrentStage(StageCooling);	
+	#endif	
+}
+
+#define MAX_WHIRLPOOL_TIME 10
+#define MIN_WHIRLPOOL_TIME 1
+
+unsigned long _whirlpoolTime;
+boolean _whirlpoolInput;
 boolean _pumpRunning;
 
-#define BREW_END_STAY_DURATION 10
+void autoModeWhirlpoolInputTime(void)
+{
+	_whirlpoolTime=3;
+	_whirlpoolInput=true;
+
+	uiTempDisplayHide();
+	uiClearScreen();
+	
+	uiSubTitle(STR(Timeing_Whirlpool));
+	uiRunningTimeShowInitial(_whirlpoolTime * 60);
+	uiMenu(STR(Up_Down_Quit_Ok));	
+}
+
+void autoModeWhirlpool(void)
+{
+	uiClearSubTitleRow();
+	uiClearPrompt();
+
+	uiAutoModeTitle();
+	uiAutoModeStage(WhirlpoolStage);
+	if(readSetting(PS_Whirlpool)== WhirlpoolCold) gSettingTemperature = 30.0;
+	else gSettingTemperature = 85.0;
+	
+	// temperature at automode
+	uiTempDisplaySetPosition(TemperatureAutoModePosition);
+	uiDisplaySettingTemperature(gSettingTemperature);
+	
+	uiRunningTimeShowInitial(_whirlpoolTime * 60);
+	uiMenu(STR(x_x_x_Pmp));
+	
+	_pumpRunning = true;
+	pumpOn();
+	tmSetTimeoutAfter((unsigned long)_whirlpoolTime * 60 *1000);
+	uiRunningTimeStartCountDown(_whirlpoolTime * 60);
+
+	#if BluetoothSupported == true
+	btReportCurrentStage(StageWhirlpool);	
+	#endif
+	
+}
+
+void autoModeWhirlpoolFinish(void)
+{
+	pumpOff();
+
+	// if cool whirlpool, got to whirlpool, or go to end
+	if(readSetting(PS_Whirlpool) == WhirlpoolHot)
+	{
+		_state = AS_Cooling;
+		autoModeCoolingAsk(STR(START_COOLING));
+	}
+	else
+	{
+		autoModeBrewEnd();
+	}
+
+}
+
+#define BREW_END_STAY_DURATION 5
 
 
 void autoModeBrewEnd(void)
 {
-  #ifdef DEBUG
-    Serial.println ( "In autoModeBrewEnd" );
-  #endif
-    
 	pumpOff();
 	
 	uiTempDisplayHide(); 
 	uiRunningTimeStop();
 	
 	_state = AS_Finished;
-  tmPauseTimer();
 	
 	uiClearScreen();
 	
@@ -3180,12 +3333,24 @@ void autoModeBrewEnd(void)
 
 	buzzPlaySoundRepeat(SoundIdBrewEnd);
 	tmSetTimeoutAfter(BREW_END_STAY_DURATION * 1000);
-   
+
 	#if BluetoothSupported == true
 	btReportEvent(RemoteEventBrewFinished);
 	#endif
 }
 
+void autoModeCoolingFinish(void)
+{
+	if(readSetting(PS_Whirlpool) == WhirlpoolCold)
+	{
+		_state = AS_Whirlpool;
+		autoModeCoolingAsk(STR(WHIRLPOOL));
+	}
+	else
+	{
+		autoModeBrewEnd();
+	}
+}
 
 //************************************
 // for recovery
@@ -3666,22 +3831,19 @@ void autoModeEventHandler(byte event)
 		}
 		else if(event == PumpRestEventMask)
 		{
-      Serial.println ( "Mashing: Pump rest event!" );
 			//
 			if(isPumpRest())
 			{
 				// into rest
 				uiMenu(STR(_Pump_Rest_));
 				// stop heat
-        Serial.println ( "Mashing: Stopping heat" );
 				heatProgramOff();
 				//[TODO:] beep
 			}
 			else
 			{
-				// back from rest
+				// back from rese
 				uiMenu(STR(Up_Down_Pause_STP));
-       Serial.println ( "Mashing: Starting heat" );
 				heatOn();
 			}
 		}
@@ -3702,9 +3864,6 @@ void autoModeEventHandler(byte event)
 					else
 					{
 						// next stage
-           #ifdef DEBUG
-            Serial.println ( "Moving to next mashing stage due to timeout" );
-           #endif
 						autoModeMashingStageFinished();						
 					}
 				}
@@ -3741,6 +3900,23 @@ void autoModeEventHandler(byte event)
 			} 	// end of else if(_mashingTemperatureReached)
 		}		// end of temperature and timeout handling
 	}//AS_Mashing
+	else if(AutoStateIs(AS_IodineTest))
+	{
+		// timeout or user press ok
+		if(event ==ButtonPressedEventMask
+			&& btnIsStartPressed)
+		{
+			uiClearPrompt();
+			// back to next mashing step: Mashout
+			autoModeIodineTestToMashout();
+		}
+		else if(event ==TimeoutEventMask)
+		{
+			uiClearPrompt();
+			//[TODO:] make sure not other timeout event
+			autoModeIodineTestToMashout();			
+		}
+	}//AS_IodineTest
 	else if(AutoStateIs(AS_AskMaltRemove))
 	{
 		if(event ==ButtonPressedEventMask)
@@ -3796,11 +3972,17 @@ void autoModeEventHandler(byte event)
 					// next stage
 					heatOff(); // heat OFF
 					pumpOff();
-
-          // All done!
-					autoModeBrewEnd();
-
-
+					
+					if(readSetting(PS_Whirlpool) == WhirlpoolHot)
+					{
+						_state = AS_Whirlpool;
+						autoModeCoolingAsk(STR(WHIRLPOOL));
+					}
+					else
+					{
+						_state = AS_Cooling;
+						autoModeCoolingAsk(STR(START_COOLING));
+					}
 			}
 
 #else
@@ -3817,10 +3999,17 @@ void autoModeEventHandler(byte event)
 					// next stage
 					heatOff(); // heat OFF
 					pumpOff();
-
-          // All done!
-          autoModeBrewEnd();
-
+					
+					if(readSetting(PS_Whirlpool) == WhirlpoolHot)
+					{
+						_state = AS_Whirlpool;
+						autoModeCoolingAsk(STR(WHIRLPOOL));
+					}
+					else
+					{
+						_state = AS_Cooling;
+						autoModeCoolingAsk(STR(START_COOLING));
+					}
 				}
 				else
 				{
@@ -3863,13 +4052,164 @@ void autoModeEventHandler(byte event)
 			}
 		}
 	} //AS_Boiling
+	else if(AutoStateIs(AS_Cooling))
+	{
+		if(_stageConfirm)
+		{
+			if(event == ButtonPressedEventMask) 
+			{
+				if (btnIsEnterPressed)
+				{
+					// pump control
+					if(gIsPumpOn) pumpOff();
+					else pumpOn();
+				}
+				else
+				{
+					processAdjustButtons();
+				}
+			}
+			else if(event == TemperatureEventMask) 
+			{
+				// if temperature drop to desire temp
+				// end this phase
+				if(gCurrentTemperature <= gSettingTemperature )
+				{
+					// next stage
+					autoModeCoolingFinish();
+					
+					#if BluetoothSupported == true
+					btReportEvent(RemoteEventTemperatureReached);
+					#endif
+
+				}
+			}
+		}
+		else // of if(_stageConfirm), in state of asking Enter Cooling
+		{
+			// wait confirm
+			if(event != ButtonPressedEventMask) return;
+			if(btnIsStartPressed)
+			{
+				// yes
+				_stageConfirm=true;
+				autoModeEnterCooling(); 
+			}
+			else if (btnIsEnterPressed)
+			{
+				// no
+				autoModeCoolingFinish();
+			}
+		} // end of else of if(_stageConfirm)
+	} //AS_Cooling
+	else if(AutoStateIs(AS_Whirlpool))
+	{
+		if(_stageConfirm)
+		{
+			if(_whirlpoolInput) 
+			{
+				// input screen of Whirlpool time
+				if(event != ButtonPressedEventMask) return;
+				
+				if(btnIsUpPressed)
+				{
+					//up
+					if((_whirlpoolTime + 1) <= MAX_WHIRLPOOL_TIME)
+					{
+						_whirlpoolTime++;
+						uiRunningTimeShowInitial(_whirlpoolTime * 60);
+					}
+				}
+				else if (btnIsDownPressed)
+				{
+					// down
+					if((_whirlpoolTime - 1) >= MIN_WHIRLPOOL_TIME)
+					{
+						_whirlpoolTime--;
+						uiRunningTimeShowInitial(_whirlpoolTime * 60);
+					}
+				}
+				else if (btnIsStartPressed)
+				{
+					//Quit
+					autoModeWhirlpoolFinish();
+				}
+				else if (btnIsEnterPressed)
+				{
+					//OK
+					_whirlpoolInput=false;
+					autoModeWhirlpool();
+				}
+			}
+			else // of _whirlpoolInput
+			{
+				// Whirlpool stage running
+				// counting time & running pump
+				if(event == ButtonPressedEventMask)
+				{			
+					if(btnIsStartPressed)
+					{
+						if(!_pumpRunning)
+						{
+							// time, back to time setting
+							autoModeWhirlpoolInputTime();
+						}
+					}
+					else if(btnIsEnterPressed)
+					{
+						if(_pumpRunning)
+						{
+							// stop pump ,and stop & reset time
+							_pumpRunning = false;
+							pumpOff();
+							uiRunningTimeShowInitial(_whirlpoolTime * 60);
+							tmPauseTimer();
+							
+							uiMenu(STR(x_x_Time_Pmp));
+						}
+						else
+						{
+							_pumpRunning = true;
+							pumpOn();
+							uiRunningTimeStartCountDown(_whirlpoolTime * 60);
+							tmSetTimeoutAfter((unsigned long)_whirlpoolTime*60*1000);
+							
+							uiMenu(STR(x_x_x_Pmp));
+
+						}
+					}
+				}else if(event == TemperatureEventMask)
+				{
+					//[TODO:] temperature control
+				}
+				else if(event == TimeoutEventMask)
+				{
+					autoModeWhirlpoolFinish();
+				}
+			}
+		}
+		else // if(_stageConfirm)
+		{
+			// wait confirm
+			if(event != ButtonPressedEventMask) return;
+			if(btnIsStartPressed)
+			{
+				// yes
+				_stageConfirm=true;
+				autoModeWhirlpoolInputTime();
+			}
+			else if (btnIsEnterPressed)
+			{
+				// no
+				autoModeWhirlpoolFinish();
+			}
+		} // of else // if(_stageConfirm)
+
+	}//AS_Whirlpool
 	else if(AutoStateIs(AS_Finished))
 	{
 		if(event == TimeoutEventMask)
 		{
-      #ifdef DEBUG
-        Serial.println ( "Returning to main" );
-      #endif
 			buzzMute();
 			backToMain();
 		}
@@ -3883,12 +4223,11 @@ void autoModeEventHandler(byte event)
 
 void mainSetup(void)
 {
-  uiReset();
 	uiClearScreen();
 
 	uiTitle(STR(welcome));
 	uiMenu(STR(Manual_Auto_Setup));
-  uiTempDisplaySetPosition(TemperatureMainScreenPosition);
+    uiTempDisplaySetPosition(TemperatureMainScreenPosition);
     
     #if BluetoothSupported == true
     btReportCurrentStage(StageIdleScreen);
@@ -3923,6 +4262,22 @@ void mainEventHandler(byte event)
 // *************************
 
 
+#if 0 //opt-code
+EventHandlerFunc _currentHandler;
+void switchApplication(SetupFunc setup,EventHandlerFunc handler)
+{
+	_currentHandler=handler;
+	//turn off temperature update by default, let those who want turn it on
+	uiRunningTimeStop();
+	uiTempDisplayHide();
+	
+	//default event is keyboard
+	setEventMask(ButtonPressedEventMask);
+
+	(*setup)();
+}
+
+#else
 const CScreen *currentScreen;
 void switchApplication(byte screenId)
 {
@@ -3938,7 +4293,7 @@ void switchApplication(byte screenId)
 	(* currentScreen->setup)();
 
 }
-
+#endif
 
 void backToMain(void)
 {
@@ -3961,30 +4316,34 @@ void setup() {
   // put your setup code here, to run once:
 #if SerialDebug == true
 Serial.begin(115200);
-
+Serial.println ("Hello!");
 #endif	
 	//[TODO:] move them to individual initilization code?
 	pinMode (HeatControlPin, OUTPUT);
 	pinMode (PumpControlPin, OUTPUT);
 	pinMode (BuzzControlPin, OUTPUT);
 	gIsUseFahrenheit = readSetting(PS_TempUnit);
-
+Serial.println ("\nBefore init");
 	tmInitialize();
-
+Serial.println ("\nAfter init1");
 	btnInitialize();
-
+	Serial.println ("\nAfter init2");
 	tpInitialize();
-
+	Serial.println ("\nAfter init3");
 	uiInitialize();
-
+	Serial.println ("\nAfter init4");
 	heatInitialize();
-
+	Serial.println ("\nAfter init5");
 	pumpInitialize();
-
+Serial.println ("\nBefore switchApplication");
 	switchApplication(MAIN_SCREEN);
-
+Serial.println ("\nAfter switchApplication");
 #if BluetoothSupported == true
 	btInitialize();
+#endif
+
+#if PerformanceProfiling == true
+	lastLoopTime=gCurrentTimeInMS;
 #endif
 
 }
@@ -3996,48 +4355,86 @@ Serial.begin(115200);
 //*********************************************************************
 //*********************************************************************
 
-
-
-
+#if 0 //opt-code
 void loop() {
 
 	// Process Events
 	//    button, temperature, time
 	//  Event: BUTTON,  TEMP Reach, TimeOut.
 
-  static double lastmillis = 0;
-  static double elapsed = 0;
-  static double minelapsed = 100000;
-  static double maxelapsed = 0;
-  static double totelapsed = 0;      
-  static double aveelapsed = 0;  
-  static double count = 0;      
-  
-  #ifdef DEBUG
-    if ( lastmillis > 0 ) {
-      elapsed = millis() - lastmillis;
-      if ( elapsed < minelapsed ) {
-        minelapsed = elapsed;
-      }
+	tpReadTemperature();
+	
+	// let the handler compare the temperatures themselves if they request it.
+	if(_currentEventMask & TemperatureEventMask)
+		(*_currentHandler)(TemperatureEventMask);
 
-      if ( elapsed > maxelapsed ) {
-        maxelapsed = elapsed;
-      }
+	if(tmTiming())
+	{
+		if(_currentEventMask & TimeoutEventMask)
+			(*_currentHandler)(TimeoutEventMask);	
+	}
+	
+	if(btnReadButtons()) 
+	{
+		if(isExactButtonsPressed(ButtonUpMask | ButtonDownMask))
+			backToMain();
+		else
+		{
+			// if(_currentEventMask & ButtonPressedEventMask) button event is always handled in all 
+			// screen!
+			(*_currentHandler)(ButtonPressedEventMask);
+		}
+	}
+	
+	if(pumpRestEvent())
+	{
+		if(_currentEventMask & PumpRestEventMask)
+			(*_currentHandler)(PumpRestEventMask);
+	}
+	
+	//update Time & temperature 
+	uiDisplayTemperatureAndRunningTime();
+	
+	//	
+	// threads
+	heatThread();
+	pumpThread();
+	buzzThread();
 
-      totelapsed += elapsed;
-      aveelapsed = totelapsed / ++count;
+#if BluetoothSupported == true	
+	btThread();
+#endif	
+	// handler state machine
 
-      Serial.print ( "Elapsed times, last : " );
-      Serial.print ( elapsed );
-      Serial.print ( " Min: " );      
-      Serial.print ( minelapsed );
-      Serial.print ( " Max: " );
-      Serial.print ( maxelapsed );    
-      Serial.print ( " Ave: " );
-      Serial.println ( aveelapsed );         
-    }
-    lastmillis = millis();
-  #endif
+#if SerialDebug == true
+	rmReceive();
+#endif	
+}// end of loop();
+
+
+
+#else
+
+
+void loop() {
+
+#if PerformanceProfiling == true
+	unsigned long diff=gCurrentTimeInMS - lastLoopTime;
+	lastLoopTime=gCurrentTimeInMS;
+	if(longestTime < diff)
+	{
+	 	longestTime=diff;
+		// use bluetooth to log out data
+		btReportDebugInfo((int)longestTime>>4);
+	}
+	
+#endif
+
+Serial.println ( "\nIn loop.");
+	// Process Events
+	//    button, temperature, time
+	//  Event: BUTTON,  TEMP Reach, TimeOut.
+
 	tpReadTemperature();
 	
 	// let the handler compare the temperatures themselves if they request it.
@@ -4046,12 +4443,8 @@ void loop() {
 
 	if(tmTiming())
 	{
-		if(_currentEventMask & TimeoutEventMask) {
-      #ifdef DEBUG
-        Serial.println ( "Main loop timeout !" );
-      #endif
+		if(_currentEventMask & TimeoutEventMask)
 			(*currentScreen->eventHandler)(TimeoutEventMask);	
-    }      
 	}
 	
 	if(btnReadButtons()) 
@@ -4093,4 +4486,4 @@ void loop() {
 //	rmReceive();
 #endif	
 }// end of loop();
-
+#endif

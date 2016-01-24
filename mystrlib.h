@@ -17,10 +17,10 @@ byte sprintIntDigit(char *buff, int number,int base)
     byte indx=0;
     while (base > 1)
     {
-       	int digit= number /base;
+       	int digit= number / base;
        	buff[indx++]=('0' + digit);
        	number = number - digit  * base;
-    	base = base /10;
+    	base /= 10;
 
     }
 	buff[indx++]=('0' + number);
@@ -32,10 +32,10 @@ byte sprintInt(char *buff,int number)
 	byte sign=0;
 	if(number <0)
 	{
-		*buff='-';
-		buff = buff +1;
-		number = 0- number;
-		sign=1;
+		*(buff++)='-';
+		//buff = buff +1;
+		number = -number;
+		sign = 1;
 	}
 	int base=1;
 	
@@ -43,9 +43,9 @@ byte sprintInt(char *buff,int number)
   	{
     	while( number >= base)
     	{
-     		base = base * 10;
+     		base *= 10;
     	}
-    	base = base /10;
+    	base /= 10;
  	}
  	return sign+sprintIntDigit(buff,number,base);
 }
@@ -56,9 +56,9 @@ byte sprintFloat(char *buff,float value,byte precision)
 
 	if(value <0)
 	{
-		*buff='-';
-		buff = buff +1;
-		value = 0.0- value;
+		*(buff++)='-';
+		//buff = buff +1;
+		value = -value;
 		len=1;
 	}
 
@@ -66,11 +66,11 @@ byte sprintFloat(char *buff,float value,byte precision)
     float r=0.5;
    	for(byte p=0; p < precision; p++)
    	{
-      	base = base * 10;
-        r= r * 0.1;
+      	base *= 10;
+        r *= 0.1;
    	}
 
- 	float number=value+ r;   
+ 	float number = value+ r;   
    	if (number >= 1.0) 
    	{
      	int integer=(int)number;
