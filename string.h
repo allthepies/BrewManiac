@@ -99,7 +99,7 @@ StringConst( WindowSet_ms, "WindowSet ms");
 StringConst( Heat_in_Boil, "Heat in Boil");
 
 StringConst( Unit_Parameters, "Unit Parameters");
-StringConst( Set_Degree, "Set Degrees");
+//StringConst( Set_Degree, "Set Degrees");
 StringConst( Sensor, "Sensor");
 StringConst( Inside, "Inside");
 StringConst( Outside, "Outside");

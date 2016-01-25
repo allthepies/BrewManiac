@@ -30,10 +30,11 @@ typedef byte SoundId;
 
 const byte _soundIdTemperatureReached[] PROGMEM ={5,10,3,10,3,10};
 const byte _soundIdCountDown[] PROGMEM ={9,20,20,20,20,20,20,20,20,40}; // 5 seconds
-//HOP_ALTERTING_TIME
 const byte _soundIdAddHop[] PROGMEM ={19,30,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,40}; // 10 seconds
 const byte _soundIdWaitUserInteraction[] PROGMEM ={2,10,30};
 const byte _soundIdBrewEnd[] PROGMEM ={2,37,7};
+
+// Array of pointers to sounds
 const byte * const _sounds [] PROGMEM ={
 _soundIdTemperatureReached,
 _soundIdCountDown,

@@ -30,34 +30,28 @@
 //      9       [ SPACE ]
 
 //  UNIT MENU  
-#define PS_TempUnit   10     //  Scale Temp
-#define PS_UnitBase PS_TempUnit
+
+#define PS_UnitBase PS_SensorType
 
 #define PS_AddrOfUnitSetting(i) (PS_UnitBase+i)
+#define PS_SettingIndex(i) (i-PS_UnitBase)
+#define PS_SensorType     10  //  Sensor Type
+#define PS_BoilTemp       11  //  Temp Boil °C
+#define PS_PumpCycle      12  //  Time Pump Cycle
+#define PS_PumpRest       13  //  Time Pump Rest
+#define PS_PumpPreMash    14  //  Pump PreMash
+#define PS_PumpOnMash     15  //  Pump on Mash
+#define PS_PumpOnMashOut  16  //  Pump on MashOut
+#define PS_PumpOnBoil     17  //  Pump on Boil
+#define PS_TempPumpRest   18  //  Temp Pump Rest °C
+#define PS_PidPipe        19  //  PID Pipe
+#define PS_SkipAddMalt    20  //  Skip Add Malt
+#define PS_SkipRemoveMalt 21  //  Skip Remove Malt
 
-#define PS_SensorType     11      // Sensor Type
-#define PS_BoilTemp     12       //Temp Boil °C
-//     13       Temp Boil °F
-#define PS_PumpCycle     14  //     Time Pump Cycle
-#define PS_PumpRest     15   //    Time Pump Rest
-#define PS_PumpPreMash     16  //     Pump PreMash
-#define PS_PumpOnMash     17   //    Pump on Mash
-#define PS_PumpOnMashOut     18  //     Pump on MashOut
-#define PS_PumpOnBoil      19     //  Pump on Boil
-#define PS_TempPumpRest     20    //   Temp Pump Rest °C
-//     21       Temp Pump Rest °F
-#define PS_PidPipe     22     //  PID Pipe
-#define PS_SkipAddMalt     23  //     Skip Add Malt
-#define PS_SkipRemoveMalt     24  //     Skip Remove Malt
-//#define PS_SkipIodineTest     25    //   Skip Iodine Test
-//#define PS_IodineTime     26   //    Iodine Time
-//#define PS_Whirlpool     27     //  Whirlpool
-//     28 -  31 [ SPACE ]
+//     22 -  31 [ SPACE ]
 
 //  RUN  (HTemp °C - LTemp °C - Time)
 #define PS_RunBase 32
-//#define PS_StageTemperatureAddr(i) ((PS_RunBase)+(i)* 5)
-//#define PS_StageTimeAddr(i) ((PS_RunBase)+(i)*5+4)
 #define PS_StageTemperatureAddr(i) ((PS_RunBase)+(i)* 3)
 #define PS_StageTimeAddr(i) ((PS_RunBase)+(i)*3+2)
 #define ToTempInStorage(t) ((int)(t*16))

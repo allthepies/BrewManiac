@@ -213,7 +213,7 @@ byte gBoilHeatOutput;
 
 boolean gIsHeatOn;
 boolean gIsPumpOn;
-boolean gIsUseFahrenheit;
+//boolean gIsUseFahrenheit;
 
 // *************************
 //*  function declaration
@@ -1460,7 +1460,7 @@ void settingPidEventHandler(byte)
 //*  Unit Parameters settings
 // *************************
 byte _currentUnitSetting;
-#define UINIT_ITEM_NUM 15
+#define UINIT_ITEM_NUM 12
 
 void displayDegreeSymbol(int value)
 {
@@ -1519,63 +1519,56 @@ void displaySimpleTemperature(int value)
 {
 	uiSettingShowTemperature((float)value,0);
 }
-#define WhirlpoolHot 2
-#define WhirlpoolCold 1
-#define WhirlpoolOff 0
-
 
 
 void settingUnitDisplayItem(void)
 {
 	int value=(int)readSetting(PS_AddrOfUnitSetting(_currentUnitSetting));
 	
-	//editItem(str_t label, byte value, byte max, byte min,CDisplayFunc displayFunc)
-	if(_currentUnitSetting==0)
-		editItem(STR(Set_Degree),value,1,0,&displayDegreeSymbol);
-	else if(_currentUnitSetting==1)
+	if(_currentUnitSetting==PS_SettingIndex(PS_SensorType))
 		editItem(STR(Sensor),value,1,0,&displayInsideOutside);
-	else if(_currentUnitSetting==2)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_BoilTemp))
 //		editItem(STR(Temp_Boil),value,105,90,&displaySimpleTemperature);
     editItem(STR(Temp_Boil),value,30,20,&displaySimpleTemperature);    
-	/*else if(_currentUnitSetting==3) 
-	// ********* skip, for internal usage always use C
- 		editItem(STR(Temp_Boil),value,105,90,&displaySimpleInteger);*/
-	else if(_currentUnitSetting==4)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_PumpCycle))
 		editItem(STR(Pump_Cycle),value,15,5,&displayTime);
-	else if(_currentUnitSetting==5)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_PumpRest))
 		editItem(STR(Pump_Rest),value,5,0,&displayTime);
-	else if(_currentUnitSetting==6)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_PumpPreMash))
 		editItem(STR(Pump_PreMash),value,1,0,&displayOnOff);
-	else if(_currentUnitSetting==7)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_PumpOnMash))
 		editItem(STR(Pump_On_Mash),value,1,0,&displayOnOff);
-	else if(_currentUnitSetting==8)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_PumpOnMashOut))
 		editItem(STR(Pump_Mashout),value,1,0,&displayOnOff);
-	else if(_currentUnitSetting==9)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_PumpOnBoil))
 		editItem(STR(Pump_On_Boil),value,1,0,&displayOnOff);
-	else if(_currentUnitSetting==10)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_TempPumpRest))
 		editItem(STR(Pump_Stop),value,105,80,&displaySimpleTemperature);
-	/*else if(_currentUnitSetting==11) // ignore
-	// ********* skip, for internal usage always use C
-		editItem(STR(Pump_Stop),value,105,80,&displaySimpleTemperature);*/
-	else if(_currentUnitSetting==12)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_PidPipe))
 		editItem(STR(PID_Pipe),value,1,0,&displayActivePassive);
-	else if(_currentUnitSetting==13)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_SkipAddMalt))
 		editItem(STR(Skip_Add),value,1,0,&displayYesNo);
-	else if(_currentUnitSetting==14)
+
+	else if(_currentUnitSetting==PS_SettingIndex(PS_SkipRemoveMalt))
 		editItem(STR(Skip_Remove),value,1,0,&displayYesNo);
-//	else if(_currentUnitSetting==15)
-//		editItem(STR(Skip_Iodine),value,1,0,&displayYesNo);
-//	else if(_currentUnitSetting==16)
-//		editItem(STR(IodineTime),value,90,0,&displayTimeOff);
-//	else if(_currentUnitSetting==17)
-//		editItem(STR(Whirlpool),value,2,0,&displayHotColdOff);
+
 }
 
 // Initialization of the screen
 void settingUnitSetup(void)
 {
 	uiMenu(STR(Up_Down_x_Ok));
-	_currentUnitSetting=0;
+	_currentUnitSetting=PS_SettingIndex(PS_SensorType);
 	settingUnitDisplayItem();
 }
 
@@ -1586,22 +1579,12 @@ void settingUnitEventHandler(byte)
 		byte value=(byte)editItemValue();
 		updateSetting(PS_AddrOfUnitSetting(_currentUnitSetting),value);
 		
-		if(_currentUnitSetting == 0 ) // degree setting
-		{
-			if(gIsUseFahrenheit != (boolean)value)
-				uiChangeTemperatureUnit((boolean)value);
-
-			gIsUseFahrenheit = (boolean)value;
-		}
-		
 		//goto next item
 		_currentUnitSetting++;
 		
-		// use C only internally.
-		if(_currentUnitSetting== 11 || _currentUnitSetting== 3 )
-			_currentUnitSetting ++;
-		if(UINIT_ITEM_NUM == _currentUnitSetting)
+		if(_currentUnitSetting > PS_SettingIndex(PS_SkipRemoveMalt) )
 		{
+      // All unit params entered, return to main menu
 			uiClearSettingRow();
 			switchApplication(SETUP_SCREEN);
 			return;
@@ -2717,7 +2700,6 @@ void autoModeNextMashingStep(void)
 	
 	_mashingStep++;
 
-	
 	byte time;
 	while((time = readSetting(PS_StageTimeAddr(_mashingStep))) == 0)
 	{
@@ -2726,6 +2708,7 @@ void autoModeNextMashingStep(void)
 	// 	if(_mashingStep > 7), mashout time will always more than 1
 	
 	uiAutoModeStage(_mashingStep);
+  uiClearPrompt();
 	uiRunningTimeSetPosition(RunningTimeNormalPosition);
 	uiRunningTimeShowInitial(time * 60);
 
@@ -3967,7 +3950,7 @@ Serial.begin(115200);
 	pinMode (HeatControlPin, OUTPUT);
 	pinMode (PumpControlPin, OUTPUT);
 	pinMode (BuzzControlPin, OUTPUT);
-	gIsUseFahrenheit = readSetting(PS_TempUnit);
+//	gIsUseFahrenheit = readSetting(PS_TempUnit);
 
 	tmInitialize();
 
