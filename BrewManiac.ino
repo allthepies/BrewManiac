@@ -12,6 +12,9 @@
 #include <EEPROM.h>
 #include <PID_v1.h>
 
+
+#define VERSION "1.0"
+
 // *************************
 //*  Configuration
 // *************************
@@ -191,6 +194,9 @@ const byte SoftwareSerialTx = 11;
 #define C_NUMHOPS_STAGE  3
 #define C_BOIL_STAGE  4
 #define C_HOPS_STAGE  5
+
+
+
 
 
 //}debug
@@ -952,7 +958,7 @@ float round025(float num)
 	return (float)intPart + ((int)((num - (float)intPart)*100.0)/25)*0.25;
 }
 
-void heatThread(void)
+void heatThread(boolean inBoil)
 {
 	if(! gIsHeatOn) return;
 	
@@ -992,18 +998,29 @@ void heatThread(void)
   	{
     	if (Rapporto < 1.00)
     	{
+        #ifdef DEBUG
+          Serial.println ("Calling PID compute");
+        #endif
      		thePID.Compute();   // was 6, getting close, start feeding the PID -mdw
     	} 
     	else // if (Rapporto < 1.00)
     	{
-      		pidOutput = 255;      // was 5, ignore PID and go full speed -mdw  // set the output to full on
+        #ifdef DEBUG
+          Serial.println ("Bypassing PID compute, full power");
+        #endif
+        pidOutput = 255;      // was 5, ignore PID and go full speed -mdw  // set the output to full on
     	}  
   	}// end of _isPIDMode
 
   	// In boiling stage, the output value is reassigned.
   	
-	if (pidInput >= pidSetpoint && pidSetpoint >= gBoilStageTemperature) 
+	if (inBoil &&
+	  pidInput >= pidSetpoint && pidSetpoint >= gBoilStageTemperature) {
 		pidOutput = gBoilHeatOutput * 255.0 / 100.0;
+    #ifdef DEBUG
+      Serial.println ( "Overridden PID in boil for PWM");
+    #endif
+	}
   
 #ifdef DEBUG //  SerialDebug == true
     	Serial.print("PID.Compute: Input=");
@@ -1460,7 +1477,6 @@ void settingPidEventHandler(byte)
 //*  Unit Parameters settings
 // *************************
 byte _currentUnitSetting;
-#define UINIT_ITEM_NUM 12
 
 void displayDegreeSymbol(int value)
 {
@@ -2506,22 +2522,22 @@ void manualModeEventHandler(byte event)
 // use the same variable  with maunal mode 
 //byte _state;
 
-#define AS_AskDelayStart 	0
-#define AS_AskResume   		1
-#define AS_AskWaterAdded 	2
-#define AS_PumpPrime 	 	3
+#define AS_AskDelayStart   0
+#define AS_AskResume      1
+#define AS_AskWaterAdded  2
+#define AS_PumpPrime    3
 #define AS_DelayTimeInput   4
 #define AS_DelayTimeConfirm 5
 #define AS_DelayWaiting     6
 
-#define AS_MashIn			7
+#define AS_MashIn     7
 #define AS_MashInAskContinue   8
 #define AS_AskAddMalt       9
 
 #define AS_Mashing          10
 //#define AS_Mashout , the same as Mashing procedure
 #define AS_AskMaltRemove   11
-#define AS_Boiling		   12
+#define AS_Boiling       12
 
 //#define AS_Whirlpool       13
 //#define AS_IodineTest      14
@@ -2532,6 +2548,7 @@ void manualModeEventHandler(byte event)
 
 #define HOP_ALTERTING_TIME 10
 #define ADVANCE_BEEP_TIME 5
+
 #define AutoStateIs(s) (_state==(s))
 
 byte _primePumpCount;
@@ -3925,10 +3942,10 @@ void switchApplication(byte screenId)
 
 void backToMain(void)
 {
-	// turn pump & heat off
+	// turn pump, heat and buzzer off
 	heatOff();
 	pumpOff();
-	//buzzerOff();
+  buzzMute();
 	//
 	switchApplication(MAIN_SCREEN);
 }
@@ -3988,15 +4005,16 @@ void loop() {
 	//    button, temperature, time
 	//  Event: BUTTON,  TEMP Reach, TimeOut.
 
-  static double lastmillis = 0;
-  static double elapsed = 0;
-  static double minelapsed = 100000;
-  static double maxelapsed = 0;
-  static double totelapsed = 0;      
-  static double aveelapsed = 0;  
-  static double count = 0;      
+    
   
-  #ifdef DEBUG
+  #ifdef DEBUGZ
+    static double lastmillis = 0;
+    static double elapsed = 0;
+    static double minelapsed = 100000;
+    static double maxelapsed = 0;
+    static double totelapsed = 0;      
+    static double aveelapsed = 0;  
+    static double count = 0;    
     if ( lastmillis > 0 ) {
       elapsed = millis() - lastmillis;
       if ( elapsed < minelapsed ) {
@@ -4063,7 +4081,7 @@ void loop() {
 	
 	//	
 	// threads
-	heatThread();
+	heatThread( AutoStateIs(AS_Boiling) );
 	pumpThread();
 	buzzThread();
 
