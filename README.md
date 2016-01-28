@@ -4,6 +4,7 @@ an Open ArdBir alternative.
 History
 
 2016-01-24  - allthepies
+
 Forked Vito's original and made the following changes:-
 
 * Removal of mash stages and naming simplification.
@@ -16,7 +17,9 @@ Note:  Currently the min/max allowed values for mash/boil temperatures and times
 With these settings in place, the code could not be used for a "real" brew.  The original limits are in the code but commented out currently. I will sort this out once testing is complete.
 
 Fixes
-In manual mode, flashing countdown time kept on flashing if return to main screen was selected.
+* In manual mode, flashing countdown time kept on flashing if return to main screen was selected.
+* If repeating buzzer was on and return to main screen selected then buzzer continued to sound.
+* HeatThread would set full heat output during mash stages if temp above setpoint, should only occur during boil.
 
 
 Vito's original README comments follow:-
