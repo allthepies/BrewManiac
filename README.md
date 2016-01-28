@@ -12,6 +12,9 @@ Forked Vito's original and made the following changes:-
 * Reorganisation of EEPROM persistent storage mapping to reflect above.
 * Addition of compile time capability to change measurement resolution of DS18B20 temp probe from between 10 and 12 bits.
 
+Note:  Currently the min/max allowed values for mash/boil temperatures and times are set very low to allow testbest testing!
+With these settings in place, the code could not be used for a "real" brew.  The original limits are in the code but commented out currently. I will sort this out once testing is complete.
+
 Fixes
 In manual mode, flashing countdown time kept on flashing if return to main screen was selected.
 
