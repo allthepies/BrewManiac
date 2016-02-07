@@ -18,21 +18,24 @@ typedef byte SoundId;
 
 
 // for one shot sound
-#define SoundIdTemperatureReached 0
-#define SoundIdCountDown 1
-#define SoundIdAddHop 2
-#define SoundIdWaitUserInteraction 3
-#define SoundIdBrewEnd 4
-#define SoundIdMashInTempReached SoundIdTemperatureReached
-#define SoundIdBoil SoundIdTemperatureReached
-#define SoundIdDelayTimeout SoundIdTemperatureReached
+#define SoundIdTemperatureReached   0
+#define SoundIdCountDown            1
+#define SoundIdAddHop               2
+#define SoundIdWaitUserInteraction  3
+#define SoundIdBrewEnd              4
 
+#define SoundIdMashInTempReached    SoundIdTemperatureReached
+#define SoundIdBoil                 SoundIdTemperatureReached
+#define SoundIdDelayTimeout         SoundIdTemperatureReached
 
-const byte _soundIdTemperatureReached[] PROGMEM ={5,10,3,10,3,10};
-const byte _soundIdCountDown[] PROGMEM ={9,20,20,20,20,20,20,20,20,40}; // 5 seconds
-const byte _soundIdAddHop[] PROGMEM ={19,30,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,40}; // 10 seconds
-const byte _soundIdWaitUserInteraction[] PROGMEM ={2,10,30};
-const byte _soundIdBrewEnd[] PROGMEM ={2,37,7};
+// Sound definitions.
+// First byte indicates number of following bytes
+// Subsequent bytes are in pairs, first byte = buzzer "on" duration (ms), second byte = buzzer "off" duration(ms)
+const byte _soundIdTemperatureReached[]   PROGMEM = {5,10,3,10,3,10};
+const byte _soundIdCountDown[]            PROGMEM = {9,20,20,20,20,20,20,20,20,40}; // 5 seconds
+const byte _soundIdAddHop[]               PROGMEM = {19,30,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,40}; // 10 seconds
+const byte _soundIdWaitUserInteraction[]  PROGMEM = {2,10,30};
+const byte _soundIdBrewEnd[]              PROGMEM = {2,37,7};
 
 // Array of pointers to sounds
 const byte * const _sounds [] PROGMEM ={

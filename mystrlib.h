@@ -56,9 +56,8 @@ byte sprintFloat(char *buff,float value,byte precision)
 
 	if(value <0)
 	{
-		*(buff++)='-';
-		//buff = buff +1;
-		value = -value;
+		buff[0]='-';
+		value = 0.00 - value;
 		len=1;
 	}
 
@@ -74,12 +73,12 @@ byte sprintFloat(char *buff,float value,byte precision)
    	if (number >= 1.0) 
    	{
      	int integer=(int)number;
-     	len +=sprintInt(buff,integer);
+     	len +=sprintInt(buff+len,integer);
      	number -= (float)integer;
    	}
    	else
    	{
-       	buff[0]='0';
+       	buff[len]='0';
        	len += 1;
    	}
   

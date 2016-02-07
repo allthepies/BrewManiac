@@ -12,6 +12,7 @@
 #include <EEPROM.h>
 #include <PID_v1.h>
 
+#define TESTBED
 
 #define VERSION "1.0"
 
@@ -114,7 +115,7 @@ const byte SoftwareSerialTx = 11;
 
 #define ElectronicOnly true
 
-#define PerformanceProfiling false
+
 
 #define NoPrint false
 #define BT_STRICT true
@@ -134,12 +135,12 @@ const byte SoftwareSerialTx = 11;
 #define SupportManualModeCountDown true
 
 
-#define ButtonPressedDetectMinTime 125 // in ms
-#define ButtonLongPressedDetectMinTime 1500 // in ms
+#define ButtonPressedDetectMinTime      125 // in ms
+#define ButtonLongPressedDetectMinTime  1500 // in ms
 
 #define ButtonContinuousPressedDetectMinTime 1000 // in ms
-#define ButtonContinuousPressedTrigerTime 150 // in ms
-#define ButtonFatFingerTolerance 50  // in ms
+#define ButtonContinuousPressedTrigerTime     150 // in ms
+#define ButtonFatFingerTolerance               50 // in ms
 
 #if USE_DS18020
 //#define ONEWIRE_SEARCH 0
@@ -187,16 +188,13 @@ const byte SoftwareSerialTx = 11;
 #define SerialDebug true
 
 
-
+// Main process stepa
 #define C_MASHIN_STAGE  0
 #define C_MAINMASH_STAGE  1
 #define C_MASHOUT_STAGE  2
 #define C_NUMHOPS_STAGE  3
 #define C_BOIL_STAGE  4
 #define C_HOPS_STAGE  5
-
-
-
 
 
 //}debug
@@ -219,7 +217,6 @@ byte gBoilHeatOutput;
 
 boolean gIsHeatOn;
 boolean gIsPumpOn;
-//boolean gIsUseFahrenheit;
 
 // *************************
 //*  function declaration
@@ -1545,8 +1542,11 @@ void settingUnitDisplayItem(void)
 		editItem(STR(Sensor),value,1,0,&displayInsideOutside);
 
 	else if(_currentUnitSetting==PS_SettingIndex(PS_BoilTemp))
-//		editItem(STR(Temp_Boil),value,105,90,&displaySimpleTemperature);
+#ifdef TESTBED  
     editItem(STR(Temp_Boil),value,30,20,&displaySimpleTemperature);    
+#else    
+		editItem(STR(Temp_Boil),value,105,90,&displaySimpleTemperature);
+#endif  
 
 	else if(_currentUnitSetting==PS_SettingIndex(PS_PumpCycle))
 		editItem(STR(Pump_Cycle),value,15,5,&displayTime);
@@ -1684,11 +1684,17 @@ void settingAutomationDisplayItem(void)
 	else if(_editingStage == C_MAINMASH_STAGE )
 	{
 		if (_editingStageAux == 0)
-			//editItem(STR(Mash),value,ToTempInStorage(70),ToTempInStorage(60),&displayStageTemperature);
+#ifdef TESTBED    
       editItem(STR(Mash),value,ToTempInStorage(50),ToTempInStorage(25),&displayStageTemperature);     
+#else      
+			editItem(STR(Mash),value,ToTempInStorage(70),ToTempInStorage(60),&displayStageTemperature);
+#endif
 		else
-			//editItem(STR(Mash),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);	
+#ifdef TESTBED       
       editItem(STR(Mash),value,50,MIN_STAGE_TIME,&displayTime);
+#else   
+      editItem(STR(Mash),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);   
+#endif
 	}
 /* 
 	else if(_editingStage ==2)
@@ -1731,11 +1737,17 @@ void settingAutomationDisplayItem(void)
 	{
 		// MashOut
 		if (_editingStageAux == 0)
-			//editItem(STR(Mash_out),value,ToTempInStorage(80),ToTempInStorage(75),&displayStageTemperature);
+#ifdef TESTBED       
       editItem(STR(Mash_out),value,ToTempInStorage(30),ToTempInStorage(22),&displayStageTemperature);     
+#else      
+      editItem(STR(Mash_out),value,ToTempInStorage(80),ToTempInStorage(75),&displayStageTemperature);
+#endif      
 		else
-			//editItem(STR(Mash_out),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);	
+#ifdef TESTBED       
     editItem(STR(Mash_out),value,10,1,&displayTime);       
+#else
+      editItem(STR(Mash_out),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime); 
+#endif    
 	}
 	else if(_editingStage == C_NUMHOPS_STAGE )
 	{
@@ -1749,8 +1761,11 @@ void settingAutomationDisplayItem(void)
 		// 9. boil time
 		value =readSetting(PS_BoilTime);
 		// boiling, need to input 
-		//editItem(STR(Boil),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);
+#ifdef TESTBED       
       editItem(STR(Boil),value,10,1,&displayTime);
+#else
+    editItem(STR(Boil),value,MAX_STAGE_TIME,MIN_STAGE_TIME,&displayTime);
+#endif         
 	}
 	else //if(_editingStage ==10)
 	{
@@ -2957,7 +2972,7 @@ void autoModeEnterBoiling(void)
 
 #if SupportAutoModeRecovery == true	
 	autoModeRecoveryTimeReset();
-	updateSetting(PS_StageResume,8);
+	updateSetting(PS_StageResume,C_BOIL_STAGE);
 	autoModeUpdateRecoveryTime(boilTime);
 #endif
 
@@ -2969,7 +2984,7 @@ void autoModeEnterBoiling(void)
 	if(readSetting(PS_PumpOnBoil)) pumpOn();
 	else pumpOff();
 
-	setAdjustTemperature(110.0,80.0);
+	setAdjustTemperature(110.0,70.0);
 	_isEnterPwm =false;
 	heatOn();
 	#if BluetoothSupported == true
@@ -3212,7 +3227,7 @@ void autoModeResumeProcess(void)
 	heatLoadParameters();
 	heatOn();
 
-	if (stage == 8) // boiling
+	if (stage == C_BOIL_STAGE) // boiling
 	{
 		autoModeEnterBoiling();
 		// if 0xfFF, assume not 
@@ -3222,7 +3237,7 @@ void autoModeResumeProcess(void)
 
 			if(time < boilTime)
 			{
-				// findout whihc hop is current 
+				// findout which hop is current 
 				autoModeRecoveryTimeTracking = true;
 			
 				#if BluetoothSupported == true
@@ -3383,7 +3398,7 @@ void autoModeEventHandler(byte event)
 			if(gIsPumpOn)
 			{
 				pumpOff();
-				tmSetTimeoutAfter(350);
+				tmSetTimeoutAfter(2000);
 			}
 			else
 			{
@@ -3799,8 +3814,6 @@ void autoModeEventHandler(byte event)
 
           // All done!
 					autoModeBrewEnd();
-
-
 			}
 
 #else
@@ -3952,10 +3965,6 @@ void backToMain(void)
 // *************************
 //*  Main procedure
 // *************************
-#if PerformanceProfiling == true
-unsigned long lastLoopTime;
-unsigned long longestTime;
-#endif
 
 void setup() {
   // put your setup code here, to run once:
@@ -4007,7 +4016,7 @@ void loop() {
 
     
   
-  #ifdef DEBUGZ
+  #ifdef DEBUG_TIMING
     static double lastmillis = 0;
     static double elapsed = 0;
     static double minelapsed = 100000;

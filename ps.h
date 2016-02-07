@@ -82,7 +82,7 @@
 //  RESUME
 #define PS_StageResume    54 //      HANDLE Stage
 #define PS_StageTimeLeft  55 //      HANDLE Time Rest
-#define PS_HopAdd    56     //  Hop Add
+//#define PS_HopAdd    56     //  Hop Add
 
 //    88 -  89 [ SPACE ]
 /*
