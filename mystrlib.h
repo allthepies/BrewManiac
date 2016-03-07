@@ -41,11 +41,12 @@ byte sprintInt(char *buff,int number)
 	
   	if(number >= 10)
   	{
-    	while( number >= base)
-    	{
-     		base *= 10;
-    	}
-    	base /= 10;
+      int cb=number;
+       while(cb > 9)
+       {
+         cb /=  10;
+         base *= 10;
+       }     
  	}
  	return sign+sprintIntDigit(buff,number,base);
 }

@@ -1308,6 +1308,8 @@ void editItem(str_t label, int value, int max, int min,void (*displayFunc)(int))
 	_editingValue=value;
 	_maxValue=max;
 	_minValue=min;
+  if( _editingValue > _maxValue) _editingValue=_maxValue;
+  if( _editingValue < _minValue) _editingValue=_minValue;
 	_displayFunc=displayFunc;
 	
 	// uiClearSettingRow();
@@ -1393,7 +1395,7 @@ byte _currentPidSetting;
 
 // table implementation takes up a lot of memory.
 // change to hard-coded.
-#define PID_SETTING_NUM 8
+#define PID_SETTING_NUM 7
 void settingPidEditSetting(void)
 {	
 	int value=(int)readSetting(PS_AddrOfPidSetting(_currentPidSetting));
@@ -1439,10 +1441,9 @@ void settingPidEventHandler(byte)
 		_currentPidSetting ++;		
 
 		{
-			// use electric, // unavailable setting: last one
-			if(_currentPidSetting == (PID_SETTING_NUM -1)) 
+			// All done ?
+			if(_currentPidSetting == PID_SETTING_NUM ) 
 			{
-				// last item is unavailable for electric setting
 				uiClearSettingRow();
 				switchApplication(SETUP_SCREEN);
 				return;
@@ -3454,7 +3455,7 @@ void autoModeEventHandler(byte event)
 		}
 		else if(btnIsStartPressed)
 		{
-			// quite
+			// quit
 			backToMain();
 		}
 		else if(btnIsEnterPressed)
@@ -3681,14 +3682,12 @@ void autoModeEventHandler(byte event)
 		}
 		else if(event == PumpRestEventMask)
 		{
-      Serial.println ( "Mashing: Pump rest event!" );
 			//
 			if(isPumpRest())
 			{
 				// into rest
 				uiMenu(STR(_Pump_Rest_));
 				// stop heat
-        Serial.println ( "Mashing: Stopping heat" );
 				heatProgramOff();
 				//[TODO:] beep
 			}
@@ -3696,7 +3695,6 @@ void autoModeEventHandler(byte event)
 			{
 				// back from rest
 				uiMenu(STR(Up_Down_Pause_STP));
-       Serial.println ( "Mashing: Starting heat" );
 				heatOn();
 			}
 		}
