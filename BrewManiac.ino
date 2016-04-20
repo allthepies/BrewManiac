@@ -1,3 +1,4 @@
+
 /**********************************************************************
  BrewManiac 
  created by Vito Tai
@@ -12,7 +13,7 @@
 #include <EEPROM.h>
 #include <PID_v1.h>
 
-#define TESTBED
+//#define TESTBED
 
 #define VERSION "1.0"
 
@@ -724,6 +725,7 @@ boolean btnReadButtons(void)
 #if USE_DS18020 == true
 
 OneWire ds(SensorPin);
+
 boolean _isConverting=false;
 
 #define DSCMD_CONVERT_T 0x44
@@ -2985,7 +2987,11 @@ void autoModeEnterBoiling(void)
 	if(readSetting(PS_PumpOnBoil)) pumpOn();
 	else pumpOff();
 
+#ifdef TESTBED
+  setAdjustTemperature(110.0,25.0);
+#else  
 	setAdjustTemperature(110.0,70.0);
+#endif 
 	_isEnterPwm =false;
 	heatOn();
 	#if BluetoothSupported == true
@@ -3810,7 +3816,7 @@ void autoModeEventHandler(byte event)
 					heatOff(); // heat OFF
 					pumpOff();
 
-          // All done!
+					// All done!
 					autoModeBrewEnd();
 			}
 
@@ -3829,8 +3835,8 @@ void autoModeEventHandler(byte event)
 					heatOff(); // heat OFF
 					pumpOff();
 
-          // All done!
-          autoModeBrewEnd();
+					// All done!
+					autoModeBrewEnd();
 
 				}
 				else
@@ -3974,6 +3980,7 @@ Serial.begin(115200);
 	pinMode (HeatControlPin, OUTPUT);
 	pinMode (PumpControlPin, OUTPUT);
 	pinMode (BuzzControlPin, OUTPUT);
+  digitalWrite(BuzzControlPin,HIGH);
 //	gIsUseFahrenheit = readSetting(PS_TempUnit);
 
 	tmInitialize();

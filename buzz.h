@@ -72,7 +72,7 @@ void buzzStartPlay(SoundId id, boolean repeat)
 	_playing=true;
 	
 	_buzzingTime = millis();
-	digitalWrite ( BuzzControlPin, HIGH );
+	digitalWrite ( BuzzControlPin, LOW );
 	_buzzing=true;
 }
 
@@ -89,7 +89,7 @@ void buzzPlaySoundRepeat(SoundId id)
 
 void buzzMute(void)
 {
-	digitalWrite (BuzzControlPin, LOW);
+	digitalWrite (BuzzControlPin, HIGH);
 	_playing=false;
 
 }
@@ -120,7 +120,7 @@ void buzzThread(void)
 		_ptrCurrentNote ++;	
 		_currentPeriod = (word)pgm_read_byte(_ptrCurrentNote) * 25;
 		
-		digitalWrite ( BuzzControlPin, _buzzing ? LOW : HIGH );
+		digitalWrite ( BuzzControlPin, _buzzing ? HIGH : LOW );
 
 		_buzzing = ! _buzzing;
 	}

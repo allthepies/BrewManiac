@@ -32,7 +32,7 @@ StringConst( Up_Down_Done_x,    "UP   DWN  Done ---");
 #endif
 
 
-StringConst( welcome,"Matt's Brewshed");
+StringConst( welcome,"One Brewery");
 
 #if NoDelayStart == false
 StringConst( To_be_started_in,"To be started in");
